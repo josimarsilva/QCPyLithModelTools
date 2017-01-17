@@ -731,8 +731,7 @@ class PyLith_JS():
         SlopeChange=np.copy(tmp)
         tmp2=SlopeChangeTop[1:]
         SlopeChangeTop=np.copy(tmp2)
-        
-        
+         
         SSEind=np.zeros([SlopeChangeTop.shape[0],2],dtype=int)
         SSEind[:,0]=SlopeChangeTop[:]
         SSEind[:,1]=SlopeChange[:]
