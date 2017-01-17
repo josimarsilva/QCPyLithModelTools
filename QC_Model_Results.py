@@ -24,12 +24,16 @@ def main():
     #mu=-120
     #sigma=40
 
-    mu_s=7; mu_d=6; dt='025'
-    mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/dt_"+dt+"/mu_s_"+str(mu_s)+"/mu_d_"+str(mu_d)+"/"
+    mu_s=7; mu_d=6; dt='1'
+    #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/dt_"+dt+"/mu_s_"+str(mu_s)+"/mu_d_"+str(mu_d)+"/"
+    #dirGPS='/nobackup1/josimar/Projects/SlowEarthquakes/data/GPS/'
+    
+    mainDir='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/SensitivityTests/dt_'+dt+'/mu_s_'+str(mu_s)+'/mu_d_'+str(mu_d)+'/'  
+    dirGPS='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/Data/GPS/data/'
 
     #mainDir='/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/dt_'+(dt)+'/mu_'+str(mu)+'/sigma_'+str(sigma)+'/'   
     #mainDir='/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/dt_'+(dt)+'/mu_s_'+str(mu_s)+'/mu_d_'+str(mu_d)+'/'    
-    dirGPS='/nobackup1/josimar/Projects/SlowEarthquakes/data/GPS/'
+    
 
     print mainDir
     
