@@ -1,0 +1,68 @@
+import csv
+import numpy as np
+from numpy import genfromtxt, poly1d
+import sys
+import os.path
+import math
+import matplotlib.pyplot as plt
+from matplotlib import animation
+from PyLith_JS import *
+from scipy import signal
+from scipy import special
+from matplotlib import rc
+
+
+
+def main():
+
+    ReferenceDir=str(sys.argv[1])   #Reference Dir to get the fault geometry information
+    mainDir=str(sys.argv[2])   #Reference Dir to get the fault geometry information
+    mu=int(str(sys.argv[3]))          #Mean value
+    sigma=int(str(sys.argv[4]) )     #Standard deviation
+    factor_mu=float(str(sys.argv[5]) )     #Standard deviation
+
+    mainDir=mainDir+'/'
+            
+    dir=ReferenceDir+'Export/data/'
+    basenameSurface='GPS_Displacement'
+    number=0
+    data=PyLith_JS(dir,basenameSurface,number)
+    
+    
+    Time=np.array([0])  ### HERE I GET ONLY THE FIRST TIME STEP
+            
+       
+    #Getting fault geometry 
+    OutputDir=mainDir+'Figures/'
+    basenameFault='Fault'
+    OutputName=OutputDir + 'Fault_Tractions'
+    data.LoadFaultTraction(dir,basenameFault,Time)
+    #data.LoadFaultTractionRateAndState(dir,basenameFault, Time)
+    
+    
+    print "Grid  spacing size=", data.FaultX.shape[0]
+        
+    
+    #####Here I create the Slip weakening friction coefficients
+    #mu_s=0.7 #Initial value for the friction coefficient
+    #mu_d=0.6
+    #stdInput=14
+    #a=-1.5e-2  #control the mu_s exponential decay
+    #b=-1.5e-2  #Controls the mu_d exponential decay
+    #a=-3e-2  #control the mu_s exponential decay
+    #b=-3e-2  #Controls the mu_d exponential decay
+    ####data.CreateFaultFrictionVariation(mainDir, mu_s,mu_d, a, b)
+    #data.CreateSmoothFaultFrictionVariation(mainDir, mu_s, mu_d, stdInput)
+    #return
+    
+    #sigma=40 #Starndard deviation of the normal distribution
+    #mu=np.array([-140]) #mean value of the normal distribution
+    
+    data.CreateGaussianFaultFrictionVariation(mainDir, mu, sigma, factor_mu )
+    
+    #read friction coefficient instead of creating a new one.
+    #data.ReadFrictionCoefficient(mainDir)
+    #data.PlotGeometryWithFriction(mainDir)
+    
+
+main()

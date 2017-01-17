@@ -1,0 +1,133 @@
+import csv
+import numpy as np
+from numpy import genfromtxt
+import sys
+import os.path
+import math
+import matplotlib.pyplot as plt
+from Pylith_JS import *
+
+
+
+def main():
+        
+    mainDir='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/version_10/'    
+        
+    dir=mainDir+'Export/data/'
+    basenameSurface='GPS_Displacement'
+    number=0
+    data=PyLith_JS(dir,basenameSurface,number)
+    
+    TimeFile=mainDir+'Export/data/Time_Steps.dat'
+    Time=np.loadtxt(TimeFile,dtype=int)
+    Time=np.sort(Time)
+   
+    print "Number of time steps = ",Time.shape[0]
+    
+    #Load fault information here.
+    OutputDir=mainDir+'Figures/'
+    basenameFault='Fault'
+    OutputName=OutputDir + 'Fault_Tractions'
+    data.LoadFaultTraction(dir,basenameFault,Time)
+   
+    #Create fault friction variation values
+    mu=0.8 #Initial value for the friction coefficient
+    a=-1e-2
+    data.CreateFaultFrictionVariation(mainDir, mu, a)
+    
+    #Export Fault traction to use as initial condition
+    #print data.FaultTraction2.shape
+    
+    '''
+    #Export friction coefficient variation here.
+    Dir=mainDir+'spatial/'
+    FileName=Dir+'Fault_Initial_Stress.spatialdb'
+    f=open(FileName,'w')
+    f.close()
+    f=open(FileName,'a')
+    
+    headerFile ="""#SPATIAL.ascii 1
+    SimpleDB {
+      num-values =      2
+      value-names =  traction-normal traction-shear  
+      value-units =   MPa MPa
+      num-locs =  296
+      data-dim =    1
+      space-dim =    2
+      cs-data = cartesian {
+      to-meters = 1
+      space-dim = 2
+    }
+    }
+    
+    """
+    
+    #print headerFile
+    f.write(headerFile)
+    
+    count=0
+    for i in range(0,data.FaultTraction2.shape[0]):
+        
+        outstring = str(data.FaultX[i,0])+ ' '+str(data.FaultY[i,0])+ ' ' + str(data.FaultTraction2[i,0]) + '  0 \n' 
+            
+        #print outstring
+        f.write(outstring)
+            
+    f.close()
+    print "Number of values on the Fault traction file ==",i+1
+    '''
+    
+    
+   
+    ########### GPS data Information
+    GPSname=["DOAR",  "MEZC", "IGUA"]
+    GPSXcoord=np.array([-50e3, 45e3,95e3])
+    
+    #GPSintercept=np.array([0.22,  0.11, 0.12]) # THIS IS THE  BESTI HAVE. DISP = 2.75 CM/YEAR
+    
+    #GPSintercept=np.array([0.18,  0.14, 0.11]) # THIS IS THE  BESTI HAVE. DISP = 2.75 CM/YEAR
+    
+    GPSintercept=np.array([0.12,  0.1, 0.07]) # THIS IS THE  BESTI HAVE. DISP = 2.75 CM/YEAR
+        
+    #Load GPS data
+    dirGPS='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/Data/GPS/data/'
+    #GPS=GPS(dirGPS,GPSname,GPSintercept,GPSXcoord)
+    data.LoadGPSdata(dirGPS,GPSname,GPSintercept,GPSXcoord)
+    data.nameGPS=GPSname
+    
+    #Locations to extract the ground displacement.
+    Xpos=GPSXcoord
+    Ypos=np.zeros([Xpos.shape[0]])
+    
+    #Load GPS points from the model to compare
+    data.GPSdisplacementTimeSeries(dir, basenameSurface, Xpos, Ypos, Time)
+    
+    
+    #Plot and save GPS displacements here 
+    #DirName to Save Figures                  
+    OutputDir=mainDir+'Figures/'
+    FigName='GPS_displacement'
+    data.PlotDisplacementTimeSeries(OutputDir, FigName)
+    
+    #return
+        
+    Loc=320 #index of hte location to plot
+    data.PlotFaultSlipVersusTime(Loc, OutputDir)
+    
+    i=-1 #Index of the time to plot
+    #mu_f #friction coefficient function
+    #mu_f=0.6*np.ones(data.FaultX.shape[0])
+    data.PlotFaultStressAndFrictionCoefficient(OutputDir,i, data.mu_f)
+    
+    
+    
+    TimeSteps=[-1]
+    data.PlotCouloumbStressChange(OutputDir, data.mu_f, TimeSteps)
+   
+
+
+main()
+    
+    
+    
+    
