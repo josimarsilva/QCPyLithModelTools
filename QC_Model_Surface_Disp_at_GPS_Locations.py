@@ -14,12 +14,12 @@ from matplotlib import rc
 
 def main():
 
-    TimeWindow=88000
+    TimeWindow=169000
     dt="0.25"
-    mu=-40
+    mu=-140
     sigma=40
     friction_mag=0.6
-    friction_constant=0
+    friction_constant=0.05
     
     mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/mu_"+str(mu)+"/sigma_"+str(sigma)+"/" 
 
@@ -43,8 +43,8 @@ def main():
     data.PlotGeometryWithFriction(mainDir)
     #return
 
-    TimeBegin=0
-    TimeEnd=88
+    TimeBegin=155
+    TimeEnd=170
 
     InputFileNameHorizontal=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Horizontal.dat"
     InputFileNameVertical=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Vertical.dat"
