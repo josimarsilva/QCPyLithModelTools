@@ -23,7 +23,7 @@ def main():
     
     mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/mu_"+str(mu)+"/sigma_"+str(sigma)+"/" 
 
-    #print mainDir
+    print mainDir
     
     dir=mainDir+'Export/data/'
     basenameSurface='GPS_Displacement'
