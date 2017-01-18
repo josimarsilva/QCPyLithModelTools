@@ -347,10 +347,10 @@ class PyLith_JS():
         plt.ylabel('friction coefficient')
         plt.grid()
         plt.savefig(OutputNameFig,format='eps',dpi=1000)
-        plt.show()
+        #plt.show()
     
     
-    def CreateGaussianFaultFrictionVariation(self,mainDir, mu, sigma, factor_mu):
+    def CreateGaussianFaultFrictionVariation(self,mainDir, mu, sigma, factor_mu, friction_constant):
         
         print "Creating Gaussian friction coefficient..."
         
@@ -366,8 +366,8 @@ class PyLith_JS():
         y=np.max(tmp) - tmp
         y=y/np.max(y)
         y=y*factor_mu
-        self.mu_f_d=y
-        self.mu_f_s=y+y*0.2   
+        self.mu_f_d=y + friction_constant
+        self.mu_f_s=self.mu_f_d + self.mu_f_d*0.2   
         
         #Export friction coefficient variation here.
         Dir=mainDir+'spatial/'
@@ -1692,7 +1692,7 @@ class PyLith_JS():
        
     
         plt.savefig(OutputNameFig,format='eps',dpi=1000)
-        plt.show()
+        #plt.show()
         
     
     def PlotFaultSlipDuringSSEAndGeometry(self, mainDir, period_begin, period_end):

@@ -5,16 +5,20 @@ import sys
 import os.path
 import math
 import matplotlib.pyplot as plt
-from PvPython.PyLith_JS import *
+from  PyLith_JS import *
 
 
 def main():
     #Export friction coefficient variation here.
-    mainDir='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/version_28/'    
+    #mainDir='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/version_28/'    
+    mainDir='/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/ReferenceFiles/TimeSteps/'
     
-    dt=1
-    Dir=mainDir+'spatial/'
-    FileName=Dir+'TimeStepUser_'+str(dt)+'.dat'
+    dt=0.0625
+    #Dir=mainDir+'spatial/'
+    FileName=mainDir+'TimeStepUser_'+str(dt)+'.dat'
+
+    print "Saving results to file = ", FileName
+    
     f=open(FileName,'w')
     f.close()
     f=open(FileName,'a')
@@ -25,7 +29,7 @@ def main():
     #tend=np.array([0,4500, 5000, 5900, 6100, 6550, 7000, 10000  ])
     
     step=np.array([250,dt])
-    tend=np.array([0,155000,156000])
+    tend=np.array([0,80000,88000])
     #tend=np.array([0,230000,231000])
     #tend=np.array([0,2250,2255  ])  #Note that time should be a multiple of the time step 
     
@@ -45,7 +49,7 @@ def main():
         f.write(outstring)
         countTimeStep=countTimeStep+1
         
-        print s, t
+        #print s, t
         if (t >= tend[k+1] ):
             #print "k value=", k, ' shape=', tend.shape[0]
             if k+1 == tend.shape[0]-1:
@@ -63,7 +67,7 @@ def main():
     
     
     plt.figure(132123)
-    plt.plot(tf,'-')
+    plt.plot(tf,'-ks')
     plt.xlabel('time step number')
     plt.ylabel('total time [years]')
     plt.grid()

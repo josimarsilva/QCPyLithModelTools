@@ -20,6 +20,7 @@ def main():
     mu=int(str(sys.argv[3]))          #Mean value
     sigma=int(str(sys.argv[4]) )     #Standard deviation
     factor_mu=float(str(sys.argv[5]) )     #Standard deviation
+    friction_constant=float(str(sys.argv[6]) )     #Standard deviation
 
     mainDir=mainDir+'/'
             
@@ -58,7 +59,7 @@ def main():
     #sigma=40 #Starndard deviation of the normal distribution
     #mu=np.array([-140]) #mean value of the normal distribution
     
-    data.CreateGaussianFaultFrictionVariation(mainDir, mu, sigma, factor_mu )
+    data.CreateGaussianFaultFrictionVariation(mainDir, mu, sigma, factor_mu , friction_constant)
     
     #read friction coefficient instead of creating a new one.
     #data.ReadFrictionCoefficient(mainDir)

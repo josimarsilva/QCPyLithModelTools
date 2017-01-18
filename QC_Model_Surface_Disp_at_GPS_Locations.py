@@ -14,14 +14,16 @@ from matplotlib import rc
 
 def main():
 
-    dt="025"
-    mu=-20
+    TimeWindow=88000
+    dt="0.25"
+    mu=-40
     sigma=40
     friction_mag=0.6
-    print "test"
-    mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/mu_"+str(mu)+"/sigma_"+str(sigma)+"/" 
+    friction_constant=0
+    
+    mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/mu_"+str(mu)+"/sigma_"+str(sigma)+"/" 
 
-    print mainDir
+    #print mainDir
     
     dir=mainDir+'Export/data/'
     basenameSurface='GPS_Displacement'
@@ -41,13 +43,16 @@ def main():
     data.PlotGeometryWithFriction(mainDir)
     #return
 
-    TimeBegin=155.5
-    TimeEnd=158.5
+    TimeBegin=0
+    TimeEnd=88
 
     InputFileNameHorizontal=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Horizontal.dat"
     InputFileNameVertical=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Vertical.dat"
 
+    ##Load Model surface displacemet at GPS stations
     data.Load_Surface_at_GPS_Locations(InputFileNameHorizontal, InputFileNameVertical, TimeBegin, TimeEnd )
+
+    print "Number of Time Steps= ", data.Xtime.shape[0]
 
     ########### GPS data Information
     GPSname=["DOAR",  "MEZC", "IGUA"]
@@ -56,7 +61,7 @@ def main():
     #Plotting GPS time series
     OutputDir=mainDir+'Figures/'
     FigName='GPS_displacement'
-    data.PlotDisplacementTimeSeries(OutputDir, FigName)
+    #data.PlotDisplacementTimeSeries(OutputDir, FigName)
 
 
     pos=0
