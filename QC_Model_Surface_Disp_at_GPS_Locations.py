@@ -14,9 +14,10 @@ from matplotlib import rc
 
 def main():
 
-    TimeWindow=169000
+    #TimeWindow=169000
+    TimeWindow=88000
     dt="0.25"
-    mu=-140
+    mu=-40
     sigma=40
     friction_mag=0.6
     friction_constant=0.05
@@ -43,8 +44,8 @@ def main():
     data.PlotGeometryWithFriction(mainDir)
     #return
 
-    TimeBegin=155
-    TimeEnd=170
+    TimeBegin=80
+    TimeEnd=88
 
     InputFileNameHorizontal=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Horizontal.dat"
     InputFileNameVertical=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Vertical.dat"
