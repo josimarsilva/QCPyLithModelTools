@@ -112,14 +112,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         OutputNameFig2 = mainDir+'/Figures/SSE_GPSDisp_Distribution.eps'
         
             
-        #print "Computing derivative"
-        y=np.diff(self.Xtime[:,pos])
-        dx=np.diff(self.year[:,pos])
-        GPSXderivative=y/dx
-        #GPSXderivative=np.gradient(self.Xtime[:,pos], dx )
-
-        #print GPSXderivative.shape, self.Xtime.shape
-
+       
         SlopeChange=np.array([0])
         SlopeChangeTop=np.array([0])
         flag=0
@@ -238,7 +231,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
 
         plt.figure(int(np.random.rand(1)*500),[17,6])
         plt.subplot(1,2,1)
-        plt.plot(np.sort(self.InterSSEduration[:]*1.0e3),'-', linewidth=2, label=self.nameGPS[pos])
+        plt.plot(np.sort(self.InterSSEduration[:]*1.0e3),'-ks', linewidth=2, label=self.nameGPS[pos])
         plt.ylabel('SSE interval [year]', fontsize=17)
         plt.title('Time interval for occurrence of SSE events',fontsize=17)
         plt.xlabel('SSE event number [-]',fontsize=17)
@@ -279,6 +272,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         plt.ylabel('X displacement magnitude [m]', fontsize=17)
         plt.xlabel('SSE event number [-]',fontsize=17)
         plt.ylim([0,0.1])
+        #plt.ylim([0,30])
         plt.grid(True)
         plt.legend(loc="upper left")
         plt.tick_params(labelsize=17)

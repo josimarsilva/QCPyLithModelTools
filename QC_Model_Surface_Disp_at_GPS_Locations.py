@@ -14,13 +14,13 @@ from matplotlib import rc
 
 def main():
 
-    #TimeWindow=169000
-    TimeWindow=88000
+    TimeWindow=169000
+    #TimeWindow=88000
     dt="0.25"
-    mu=-40
+    mu=-60
     sigma=40
-    friction_mag=0.6
-    friction_constant=0.05
+    friction_mag=0.2
+    friction_constant=0
     
     mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/mu_"+str(mu)+"/sigma_"+str(sigma)+"/" 
 
@@ -44,8 +44,8 @@ def main():
     data.PlotGeometryWithFriction(mainDir)
     #return
 
-    TimeBegin=80
-    TimeEnd=88
+    TimeBegin=0
+    TimeEnd=170
 
     InputFileNameHorizontal=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Horizontal.dat"
     InputFileNameVertical=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Vertical.dat"
@@ -65,7 +65,7 @@ def main():
     #data.PlotDisplacementTimeSeries(OutputDir, FigName)
 
 
-    pos=0
+    pos=2
     data.GetIndexOfSSEOccurrence(mainDir,pos, dt, mu, sigma)
     data.PlotSSEIntervalOccurence(mainDir,pos)
     plt.show()
