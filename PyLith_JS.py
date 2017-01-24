@@ -11,16 +11,18 @@ from PyLith_JS import *
 
 class PyLith_JS():
      
-    def __init__(self,dirName,basename,number):
-        
+    #def __init__(self,dirName,basename,number):
+    def __init__(self):
+
+        self.dispX=[]
         #here is to load only the GPS points at certain locations
-        filename=basename+'.'+str(number)+'.csv'
-        fileName=dirName+filename
-        my_data=genfromtxt(fileName,delimiter=',')
-        self.dispX=my_data[1:,0]
-        self.dispY=my_data[1:,1]
-        self.X=my_data[1:,3]
-        self.Y=my_data[1:,4]
+        #filename=basename+'.'+str(number)+'.csv'
+        #fileName=dirName+filename
+        #my_data=genfromtxt(fileName,delimiter=',')
+        #self.dispX=my_data[1:,0]
+        #self.dispY=my_data[1:,1]
+        #self.X=my_data[1:,3]
+        #self.Y=my_data[1:,4]
     
     
     def LoadGPSdata(self,dirName,basename,GPSintercept,GPSXcoord):
@@ -240,8 +242,13 @@ class PyLith_JS():
         
         filename=mainDir+'spatial/friction_function.spatialdb'
         tmp=np.genfromtxt(filename, dtype=float,  skip_header=14)
+        x=tmp[:,0]/1e3
+        self.FaultX=np.zeros([x.shape[0],1])
+        self.FaultY=np.zeros([x.shape[0],1])
         self.mu_f_d=tmp[:,3]
         self.mu_f_s=tmp[:,2]
+        self.FaultX[:,0]=tmp[:,0]
+        self.FaultY[:,0]=tmp[:,1]
         
         print "Reading friction coefficient"
         
@@ -249,8 +256,10 @@ class PyLith_JS():
         
         plt.figure(figN)
         #plt.rc('text',usetext=True)
-        plt.plot(self.FaultX[:,0]/1e3, self.mu_f_d[:],'-k',linewidth=2,label='$\mu_d$')
-        plt.plot(self.FaultX[:,0]/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
+        plt.plot(x, self.mu_f_d[:],'-k',linewidth=2,label='$\mu_d$')
+        plt.plot(x, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
+        #plt.plot(self.FaultX[:,0]/1e3, self.mu_f_d[:],'-k',linewidth=2,label='$\mu_d$')
+        #plt.plot(self.FaultX[:,0]/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
         #plt.plot(self.FaultX[:,0]/1e3, mu_s*np.ones(self.FaultX.shape[0]),'-k', linewidth=2, label='$\mu_d$')
         plt.legend(loc='upper right',fontsize=22)
         plt.xlabel('X position along fault [km]',fontsize=22)
@@ -368,6 +377,79 @@ class PyLith_JS():
         y=y*factor_mu
         self.mu_f_d=y + friction_constant
         self.mu_f_s=self.mu_f_d + self.mu_f_d*0.2   
+        
+        #Export friction coefficient variation here.
+        Dir=mainDir+'spatial/'
+        FileName=Dir+'friction_function.spatialdb'
+        print "Saving File: ", FileName
+        f=open(FileName,'w')
+        f.close()
+        f=open(FileName,'a')
+        
+        headerFile ="""#SPATIAL.ascii 1
+        SimpleDB {
+          num-values =      4
+          value-names =  static-coefficient dynamic-coefficient slip-weakening-parameter cohesion
+          value-units =   none none  m Pa
+          num-locs =  86
+          data-dim =    1
+          space-dim =    2
+          cs-data = cartesian {
+          to-meters = 1
+          space-dim = 2
+        }
+        }
+        
+        """
+        
+        #print headerFile
+        f.write(headerFile)
+        
+        for i in range(0,self.FaultX.shape[0]):
+            
+            outstring = str(self.FaultX[i,0])+ ' '+str(self.FaultY[i,0])+ ' ' + str(self.mu_f_s[i]) + ' ' + str(self.mu_f_d[i]) +   ' 0.05  0 \n' 
+            
+            f.write(outstring)
+                
+        f.close()
+        
+        
+        print "Number of values on the Fault traction file ==",self.FaultX[:,0].shape[0]
+        print "Make sure you edit the Pylith File to reflect the numbe rows of your file"
+        
+        figN=int(np.random.rand(1)*500)
+        
+        plt.figure(figN)
+        #plt.rc('text',usetext=True)
+        plt.plot(self.FaultX[:,0]/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
+        plt.plot(self.FaultX[:,0]/1e3, self.mu_f_d[:],'-k',linewidth=2,label='$\mu_d$')
+        #plt.plot(self.FaultX[:,0]/1e3, mu_s*np.ones(self.FaultX.shape[0]),'-k', linewidth=2, label='$\mu_d$')
+        plt.legend(loc='upper right')
+        plt.xlabel('X position along fault [km]')
+        plt.ylabel('friction coefficient')
+        plt.grid()
+        plt.savefig(OutputNameFig,format='eps',dpi=1000)
+        #plt.show()
+
+    def CreateExponentialFaultFrictionVariation(self,mainDir, exponent, mu_d, mu_d_constant, mu_s, mu_s_constant):
+        
+        print "Creating Gaussian friction coefficient..."
+        
+        #Design function to create a smoothed friction coefficient variation
+        OutputNameFig=mainDir+'./Figures/Slip_Weakening_Friction_Coefficient.eps'
+        
+        x=self.FaultX[:,0]/1e3
+
+        #Exponentially decaying friction coeff
+        xmin=np.abs(np.amin(x))
+        xtmp=x+xmin
+
+        self.mu_f_d=mu_d_constant+mu_d*np.exp(exponent*xtmp)
+        self.mu_f_s=mu_s_constant+mu_s*np.exp(exponent*xtmp)
+        
+        #self.mu_f_s=self.mu_f_d + self.mu_f_d*0.2
+        #self.mu_f_s=self.mu_f_d
+        #self.mu_f_s=0.1+0.6*np.exp(-0.03*xtmp)
         
         #Export friction coefficient variation here.
         Dir=mainDir+'spatial/'
@@ -1676,7 +1758,7 @@ class PyLith_JS():
         axarr[1].plot(self.FaultX[:,0]/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
         axarr[1].plot(self.FaultX[:,0]/1e3, self.mu_f_d[:],'-k',linewidth=2,label='$\mu_d$')
         axarr[0].set_ylim([0,-80])
-        axarr[1].set_ylim([0,1])
+        #axarr[1].set_ylim([0,1])
         axarr[0].invert_yaxis()
         axarr[1].invert_yaxis()
         plt.xlim([self.FaultX[0,0]/1e3, self.FaultX[-1,0]/1e3])

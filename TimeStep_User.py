@@ -13,9 +13,12 @@ def main():
     #mainDir='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/version_28/'    
     mainDir='/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/ReferenceFiles/TimeSteps/'
     
-    dt=0.0625
+    dt=0.25
+    LargeDT=250 # This is the time step for fault loading. normally is a large value, then a fine valu given dt
+    Tbegin=35000
+    Tend=45000
     #Dir=mainDir+'spatial/'
-    FileName=mainDir+'TimeStepUser_'+str(dt)+'.dat'
+    FileName=mainDir+'TimeStepUser_Tbegin_'+str(Tbegin)+'_Tend_'+str(Tend)+'_dt_'+str(dt)+'.dat'
 
     print "Saving results to file = ", FileName
     
@@ -28,8 +31,8 @@ def main():
     #step=np.array([500, 50, 300, 1, 50, 10, 500, 500])
     #tend=np.array([0,4500, 5000, 5900, 6100, 6550, 7000, 10000  ])
     
-    step=np.array([250,dt])
-    tend=np.array([0,80000,88000])
+    step=np.array([LargeDT,dt])
+    tend=np.array([0,Tbegin,Tend])
     #tend=np.array([0,230000,231000])
     #tend=np.array([0,2250,2255  ])  #Note that time should be a multiple of the time step 
     

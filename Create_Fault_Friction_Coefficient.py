@@ -17,24 +17,33 @@ def main():
 
     ReferenceDir=str(sys.argv[1])   #Reference Dir to get the fault geometry information
     mainDir=str(sys.argv[2])   #Reference Dir to get the fault geometry information
-    mu=int(str(sys.argv[3]))          #Mean value
-    sigma=int(str(sys.argv[4]) )     #Standard deviation
-    factor_mu=float(str(sys.argv[5]) )     #Standard deviation
-    friction_constant=float(str(sys.argv[6]) )     #Standard deviation
+    #mu=int(str(sys.argv[3]))          #Mean value
+    #sigma=int(str(sys.argv[4]) )     #Standard deviation
+    #factor_mu=float(str(sys.argv[5]) )     #Standard deviation
+    #friction_constant=float(str(sys.argv[6]) )     #Standard deviation
+
+    mu_d=float(str(sys.argv[3]))          #Mean value
+    exponent=float(str(sys.argv[4]) )     #Standard deviation
+    mu_d_constant=float(str(sys.argv[5]) )     #Standard deviation
+
+    mu_s=float(str(sys.argv[6]))          #Mean value
+    mu_s_constant=float(str(sys.argv[7]) )     #Standard deviation
+    
 
     mainDir=mainDir+'/'
             
     dir=ReferenceDir+'Export/data/'
     basenameSurface='GPS_Displacement'
     number=0
-    data=PyLith_JS(dir,basenameSurface,number)
+    #data=PyLith_JS(dir,basenameSurface,number)
+    data=PyLith_JS()
     
     
     Time=np.array([0])  ### HERE I GET ONLY THE FIRST TIME STEP
             
        
     #Getting fault geometry 
-    OutputDir=mainDir+'Figures/'
+    OutputDir=ReferenceDir+'Figures/'
     basenameFault='Fault'
     OutputName=OutputDir + 'Fault_Tractions'
     data.LoadFaultTraction(dir,basenameFault,Time)
@@ -59,7 +68,8 @@ def main():
     #sigma=40 #Starndard deviation of the normal distribution
     #mu=np.array([-140]) #mean value of the normal distribution
     
-    data.CreateGaussianFaultFrictionVariation(mainDir, mu, sigma, factor_mu , friction_constant)
+    #data.CreateGaussianFaultFrictionVariation(mainDir, mu, sigma, factor_mu , friction_constant)
+    data.CreateExponentialFaultFrictionVariation(mainDir, exponent, mu_d, mu_d_constant, mu_s, mu_s_constant)
     
     #read friction coefficient instead of creating a new one.
     #data.ReadFrictionCoefficient(mainDir)

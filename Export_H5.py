@@ -9,9 +9,9 @@ def main():
 
     mainDir=str(sys.argv[1])    #main Dir where everyting will be based from
     mainDir=mainDir+'/'
-     print "Working on mainDir= ", mainDir
+    print "Working on mainDir= ", mainDir
     
-    FileName="gps-points.h5"
+    FileName=mainDir+"output/gps-points.h5"
     fid=h5py.File(FileName,'r')
 
     statInputName=["DOAR","MEZC","IGUA"]
