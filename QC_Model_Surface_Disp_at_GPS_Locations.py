@@ -32,14 +32,14 @@ def main():
     #TimeWindow=169000
     #TimeWindow=88000
     #TimeWindow=100000
-    Tbegin=35000
-    Tend=45000
+    Tbegin=10000
+    Tend=20000
     dt="0.25"
     mu=0
     sigma=40
-    friction_mag=0.02
-    friction_constant=0.01
-    exponent="-0.05"
+    friction_mag=0.05
+    friction_constant=0.05
+    exponent="-0.04"
     
     #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/mu_"+str(mu)+"/sigma_"+str(sigma)+"/" 
     #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/exponent_"+str(exponent)+"/" 
