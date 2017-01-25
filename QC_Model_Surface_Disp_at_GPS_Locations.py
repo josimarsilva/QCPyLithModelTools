@@ -37,7 +37,7 @@ def main():
     dt="0.25"
     mu=0
     sigma=40
-    friction_mag=0.05
+    friction_mag=0.02
     friction_constant=0.01
     exponent="-0.05"
     

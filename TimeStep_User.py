@@ -15,8 +15,8 @@ def main():
     
     dt=0.25
     LargeDT=250 # This is the time step for fault loading. normally is a large value, then a fine valu given dt
-    Tbegin=35000
-    Tend=45000
+    Tbegin=10000
+    Tend=20000
     #Dir=mainDir+'spatial/'
     FileName=mainDir+'TimeStepUser_Tbegin_'+str(Tbegin)+'_Tend_'+str(Tend)+'_dt_'+str(dt)+'.dat'
 
