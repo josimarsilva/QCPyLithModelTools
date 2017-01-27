@@ -3,6 +3,7 @@ sys.path.append("/nobackup1/josimar/Projects/SlowEarthquakes/Software/PyLith/pyl
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
+import os.path
 
 class Export_H5_Class():
     
@@ -17,10 +18,15 @@ class Export_H5_Class():
         #print h5py.__file__
 
         #mainDir=str(sys.argv[1])    #main Dir where everyting will be based from
-        mainDir=mainDir+'/'
+        #mainDir=mainDir+'/'
         print "Working on mainDir= ", mainDir
         
         #FileName=mainDir+"output/gps-points.h5"
+
+        if os.path.isfile(FileName) == False:
+            print "ERROR !!! File does not Exist : ", FileName
+            return
+        
         fid=h5py.File(FileName,'r')
 
         statInputName=["DOAR","MEZC","IGUA"]
@@ -102,10 +108,17 @@ class Export_H5_Class():
         #print h5py.__file__
 
         #mainDir=str(sys.argv[1])    #main Dir where everyting will be based from
-        mainDir=mainDir+'/'
+        #mainDir=mainDir+'/'
         print "Working on mainDir= ", mainDir
         
         #FileName=mainDir + "output/step01-fault_top.h5"
+        ##Check weather FileName Exist, if not exit and throug ERROR MESSAGE
+
+        if os.path.isfile(FileName) == False:
+            print "ERROR !!! File does not Exist : ", FileName
+            return
+
+        
         fid=h5py.File(FileName,'r')
 
         ###HEre are the Field from the H5 file
@@ -144,6 +157,8 @@ class Export_H5_Class():
         FaultTraction1=Traction1[indsort,:]    # Fault shear traction
         FaultTraction2=Traction2[indsort,:]     #Fault Normal traction
 
+        FaultGeometry=np.array([FaultX,FaultY])
+
         
         #Here Will save the fault informaiton
         dir=mainDir+'Export/data/'
@@ -151,6 +166,7 @@ class Export_H5_Class():
         FileName2=dir + 'Export_Fault_Slip_Z'
         FileName3=dir + 'Export_Fault_Shear_Stress'
         FileName4=dir + 'Export_Fault_Normal_Stress'
+        FileName5=dir + 'Fault_Geometry'
         
         print "Saving File: ", FileName1
         print "Saving File: ", FileName2
@@ -161,6 +177,7 @@ class Export_H5_Class():
         np.save(FileName2,disp2)
         np.save(FileName3,FaultTraction1)
         np.save(FileName4,FaultTraction2)
+        np.save(FileName5,FaultGeometry)
 
         
    

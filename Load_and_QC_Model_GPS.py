@@ -11,6 +11,25 @@ from Load_and_QC_Model_GPS import *
 
 ### Here I inherit some functions from the PyLith_JS class
 class Load_and_QC_Model_GPS(PyLith_JS):
+
+    def Load_Fault_Data_Exported_from_H5(self,mainDir):
+        
+        dir=mainDir+'Export/data/'
+        FileName1=dir + 'Export_Fault_Slip_X.npy'
+        FileName2=dir + 'Export_Fault_Slip_Z.npy'
+        FileName3=dir + 'Export_Fault_Shear_Stress.npy'
+        FileName4=dir + 'Export_Fault_Normal_Stress.npy'
+        FileName5=dir + 'Fault_Geometry.npy'
+
+        self.disp1=np.load(FileName1)
+        self.disp2=np.load(FileName2)
+        self.FaultTraction1=np.load(FileName3)*1e-6
+        self.FaultTraction2=np.load(FileName4)*1e-6
+
+        FaultGeometry=np.load(FileName5)
+        self.FaultX=FaultGeometry[0,:]
+        self.FaultY=FaultGeometry[1,:]
+        
     
     def Load_Surface_at_GPS_Locations(self,InputFileNameHorizontal, InputFileNameVertical, TimeBegin, TimeEnd ):
         
@@ -46,6 +65,9 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         t=self.year
         self.year=np.zeros([count-1,3])
         self.year=t[0:count-1,:]
+
+        self.FaultTime=self.year[:,0]
+        self.FaultTime=np.append(self.FaultTime, self.FaultTime[-1])
 
     
     def PlotDisplacementTimeSeries(self, OutputDir,FigName):

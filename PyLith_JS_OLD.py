@@ -15,6 +15,15 @@ class PyLith_JS():
     def __init__(self):
 
         self.dispX=[]
+        #here is to load only the GPS points at certain locations
+        #filename=basename+'.'+str(number)+'.csv'
+        #fileName=dirName+filename
+        #my_data=genfromtxt(fileName,delimiter=',')
+        #self.dispX=my_data[1:,0]
+        #self.dispY=my_data[1:,1]
+        #self.X=my_data[1:,3]
+        #self.Y=my_data[1:,4]
+    
     
     def LoadGPSdata(self,dirName,basename,GPSintercept,GPSXcoord):
         
@@ -32,7 +41,27 @@ class PyLith_JS():
             self.timeGPS[0:my_data.shape[0],i]=my_data[:,0]
         #self.Xcoord=Xcoord
         #self.Y=my_data[1:,7]
-
+    
+    def LoadGPSdataLargeData(self, mainDir):
+        
+        pos=0
+        InputFileName=mainDir+'Export/data/'+self.nameGPS[pos]+'_TimeSeries.dat'
+        #print "Loading ...", InputFileName
+        tmp=np.loadtxt(InputFileName,dtype=float, skiprows=3)
+    
+        self.Xtime=np.zeros([tmp.shape[0],len(self.nameGPS) ])
+        self.Ytime=np.zeros([tmp.shape[0],len(self.nameGPS) ])
+        self.year=np.copy(self.Xtime)
+        
+        for pos in range(0,len(self.nameGPS) ):
+            InputFileName=mainDir+'Export/data/'+self.nameGPS[pos]+'_TimeSeries.dat'
+            print "Loading ...", InputFileName
+            tmp=np.loadtxt(InputFileName,dtype=float, skiprows=3)
+            self.Xtime[:,pos]=tmp[:,1]
+            self.Ytime[:,pos]=tmp[:,2]
+        
+            self.year[:,pos]=tmp[:,0] 
+                  
     def LoadFaultTraction(self,dirName,basename, Time):
                     
         nTmp=0
@@ -86,8 +115,127 @@ class PyLith_JS():
                 #self.FaultTraction1[:,1]=my_data[1:,3]
                 
                 
-                count = count + 1       
-   
+                count = count + 1
+                
+    def LoadFaultTractionLargeData(self,mainDir):
+        
+        InputFileName=mainDir+'Export/data/Fault_Xdisp_Slip.dat'
+        self.disp1=np.loadtxt(InputFileName,dtype=float)
+        
+        InputFileName=mainDir+'Export/data/Fault_Zdisp_Slip.dat'
+        self.disp2=np.loadtxt(InputFileName,dtype=float)
+        
+        InputFileName=mainDir+'Export/data/Fault_ShearStress_Slip.dat'
+        self.FaultTraction1=np.loadtxt(InputFileName,dtype=float)
+        
+        InputFileName=mainDir+'Export/data/Fault_NormalStress_Slip.dat'
+        self.FaultTraction2=np.loadtxt(InputFileName,dtype=float)
+        
+        InputFileName=mainDir+'Export/data/Fault_X.dat'
+        self.FaultX=np.loadtxt(InputFileName,dtype=float)
+        
+        InputFileName=mainDir+'Export/data/Fault_Z.dat'
+        self.FaultY=np.loadtxt(InputFileName,dtype=float)
+        
+        self.FaultTime=self.year[:,0]
+    
+    def LoadFaultTractionRateAndState(self,dirName,basename, Time):
+                    
+        nTmp=0
+        filename=basename+'.'+str(nTmp)+'.csv'
+        fileName=dirName+filename
+        my_data=genfromtxt(fileName,delimiter=',')
+        
+        self.disp1=np.zeros([my_data.shape[0]-2, len(Time)])
+        self.disp2=np.copy(self.disp1)
+        self.FaultTraction1=np.zeros([my_data.shape[0]-2, len(Time)])
+        #self.FaultTraction1=np.copy(self.disp1)
+        self.FaultTraction2=np.copy(self.FaultTraction1)
+        self.FaultX=np.copy(self.FaultTraction1)
+        self.FaultY=np.copy(self.FaultTraction1)
+        self.FaultTime=np.zeros([len(Time)])
+        self.FaultSlipRate1=np.copy(self.FaultTraction1)
+        self.FaultSlipRate2=np.copy(self.FaultTraction1)
+        self.FaultStateVariable=np.copy(self.FaultTraction1)
+        
+        count = 0
+        #for number in range(0,Nfiles,1):
+        for number in Time:
+            #year = number * stepyear
+            
+            filename=basename+'.'+str(number)+'.csv'
+            fileName=dirName+filename
+            #print fileName
+            
+            if os.path.isfile(fileName):
+                my_data=genfromtxt(fileName,delimiter=',')
+            
+                #This is working fine. I tested it on October 12th.
+                ind=np.argsort(my_data[:,10])
+                my_data=my_data[ind]
+                
+                self.disp1[:,count]=my_data[1:-1,0]
+                self.disp2[:,count]=my_data[1:-1,1]
+                self.FaultTraction1[:,count]=my_data[1:-1,6]*1e-6
+                self.FaultTraction2[:,count]=my_data[1:-1,7]*1e-6
+                self.FaultX[:,count]=my_data[1:-1,10]
+                self.FaultY[:,count]=my_data[1:-1,11]
+                self.FaultSlipRate1[:,count]=my_data[1:-1,3]
+                self.FaultSlipRate2[:,count]=my_data[1:-1,4]
+                self.FaultStateVariable[:,count]=my_data[1:-1,9]
+                
+                if number > 1e6:
+                    
+                    self.FaultTime[count]= int(number*3.171e-8)
+                else:
+                    self.FaultTime[count]= int(number)
+                
+                #self.FaultTraction1[:,0]=my_data[1:,6]
+                #self.FaultTraction1[:,1]=my_data[1:,3]
+                
+                
+                count = count + 1           
+                
+    def GPSdisplacementTimeSeries(self, dirName, basename, Xpos,Ypos, Time):
+        
+        #This class gets the GPS time series exported from pylith
+        self.Xtime=np.zeros([Time.shape[0], Xpos.shape[0]],dtype=float)
+        self.Ytime=np.zeros([Time.shape[0], Xpos.shape[0]],dtype=float)
+        self.year=np.copy(self.Ytime)
+        
+        tol=1e2 
+        
+        count=0
+        for number in Time:
+            #year = number * stepyear
+            
+            data=PyLith_JS(dirName,basename,number)
+            
+            for pos in range(0,Xpos.shape[0]):
+                for i in range(0,data.X.shape[0]):
+                    
+                    
+                    #d = np.sqrt( (Xpos[pos]-data.X[i])**2 + (Ypos[pos] - data.Y[i])**2  )
+                    if np.abs(Xpos[pos]-data.X[i]) <= tol:
+                        #print Xpos[pos],data.X[i], i
+                        minInd = np.copy(i)
+                        break
+                        
+                self.Xtime[count,pos]=data.dispX[minInd]
+                self.Ytime[count,pos]=data.dispY[minInd]
+                if number > 1e6:
+                    self.year[count] = number*3.171e-8 /1e3
+                else:
+                    self.year[count] = int(number)/1e3
+                
+            count=count+1
+                #print number,pos
+            
+             
+                       
+        self.Xpos=Xpos
+        self.Ypos=Ypos
+        
     def ReadFrictionCoefficient(self, mainDir):
         
         OutputNameFig=mainDir+'./Figures/Slip_Weakening_Friction_Coefficient.eps'
@@ -126,6 +274,96 @@ class PyLith_JS():
         plt.tick_params(labelsize=20)
         #plt.show()
         '''
+        
+    def CreateSmoothFaultFrictionVariation(self,mainDir, mu_s, mu_d, stdInput):
+        
+        #Design function to create a smoothed friction coefficient variation
+        OutputNameFig=mainDir+'./Figures/Slip_Weakening_Friction_Coefficient.eps'
+        
+        window = signal.gaussian(self.FaultX.shape[0], std=stdInput)
+        #print self.FaultX.shape
+        peak=(window.shape[0]/2)
+        
+        #print peak
+        window2=window[-1]*np.ones([2*peak-1])
+        #window2[0:peak-1]=window[peak:-1]
+        window2[0:peak]=window[peak:]
+        window=window2
+        
+        self.mu_f_s=np.zeros(self.FaultX.shape[0])
+        self.mu_f_d=np.zeros(self.FaultX.shape[0])
+        
+        countS=0    
+        for i in range(0,self.mu_f_d.shape[0]):
+    
+            if self.FaultX[i,0] <= -50e3:
+                #self.mu_f[i]=mu
+                self.mu_f_s[i]=mu_s
+                self.mu_f_d[i]=mu_d
+            elif self.FaultX[i,0] > -50e3 and self.FaultX[i,0] < 125e3 :
+                self.mu_f_s[i]=mu_s*window[countS]
+                self.mu_f_d[i]=mu_d*window[countS]
+                countS=countS+1
+            else:
+                self.mu_f_s[i]=mu_s*window[countS-1]
+                self.mu_f_d[i]=self.mu_f_s[i]
+         
+        ### Add a small value to avoid zero friction coefficient    
+        self.mu_f_s=self.mu_f_s+0.05
+        self.mu_f_d=self.mu_f_d+0.05
+        
+        #Export friction coefficient variation here.
+        Dir=mainDir+'spatial/'
+        FileName=Dir+'friction_function.spatialdb'
+        f=open(FileName,'w')
+        f.close()
+        f=open(FileName,'a')
+        
+        headerFile ="""#SPATIAL.ascii 1
+        SimpleDB {
+          num-values =      4
+          value-names =  static-coefficient dynamic-coefficient slip-weakening-parameter cohesion
+          value-units =   none none  m Pa
+          num-locs =  86
+          data-dim =    1
+          space-dim =    2
+          cs-data = cartesian {
+          to-meters = 1
+          space-dim = 2
+        }
+        }
+        
+        """
+        
+        #print headerFile
+        f.write(headerFile)
+        
+        for i in range(0,self.FaultX.shape[0]):
+            
+            outstring = str(self.FaultX[i,0])+ ' '+str(self.FaultY[i,0])+ ' ' + str(self.mu_f_s[i]) + ' ' + str(self.mu_f_d[i]) +   ' 0.05  0 \n' 
+            
+            f.write(outstring)
+                
+        f.close()
+        
+        
+        print "Number of values on the Fault traction file ==",self.FaultX.shape[0]
+        print "Make sure you edit the Pylith File to reflect the numbe rows of your file"
+        
+        figN=int(np.random.rand(1)*500)
+        
+        plt.figure(figN)
+        #plt.rc('text',usetext=True)
+        plt.plot(self.FaultX/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
+        plt.plot(self.FaultX/1e3, self.mu_f_d[:],'-k',linewidth=2,label='$\mu_d$')
+        #plt.plot(self.FaultX/1e3, mu_s*np.ones(self.FaultX.shape[0]),'-k', linewidth=2, label='$\mu_d$')
+        plt.legend(loc='upper right')
+        plt.xlabel('X position along fault [km]')
+        plt.ylabel('friction coefficient')
+        plt.grid()
+        plt.savefig(OutputNameFig,format='eps',dpi=1000)
+        #plt.show()
+    
     
     def CreateGaussianFaultFrictionVariation(self,mainDir, mu, sigma, factor_mu, friction_constant):
         
@@ -206,7 +444,7 @@ class PyLith_JS():
         #Design function to create a smoothed friction coefficient variation
         OutputNameFig=mainDir+'./Figures/Slip_Weakening_Friction_Coefficient.eps'
         
-        x=self.FaultX[:,0]/1e3
+        x=self.FaultX/1e3
 
         #Exponentially decaying friction coeff
         xmin=np.abs(np.amin(x))
@@ -247,7 +485,7 @@ class PyLith_JS():
         f.write(headerFile)
         
         for i in range(0,self.FaultX.shape[0]):
-            #print self.mu_f_s[i], self.mu_f_d[i]
+            
             outstring = str(self.FaultX[i,0])+ ' '+str(self.FaultY[i,0])+ ' ' + str(self.mu_f_s[i]) + ' ' + str(self.mu_f_d[i]) +   ' 0.05  0 \n' 
             
             f.write(outstring)
@@ -255,8 +493,8 @@ class PyLith_JS():
         f.close()
         
         
-        print "\n Number of values on the Fault traction file ==",self.FaultX.shape[0]
-        print "\n \n Make sure you edit the Pylith File to reflect the numbe rows of your file \n\n"
+        print "Number of values on the Fault traction file ==",self.FaultX.shape[0]
+        print "Make sure you edit the Pylith File to reflect the numbe rows of your file"
         
         figN=int(np.random.rand(1)*500)
         
@@ -272,6 +510,172 @@ class PyLith_JS():
         plt.savefig(OutputNameFig,format='eps',dpi=1000)
         #plt.show()
         
+    def CreateFaultFrictionVariation(self, mainDir, mu_s,mu_d, a, b):
+        #This class creates variation on the friction coefficient values.
+        
+        
+        OutputNameFig=mainDir+'./Figures/Slip_Weakening_Friction_Coefficient.eps'
+        
+        xcoord= self.FaultX
+        const=xcoord[0]
+        xcoord=np.abs(xcoord[0]) + xcoord
+        
+        #mu_f=mu*np.exp(a*xcoord)
+        self.mu_f_s=np.zeros(self.FaultX.shape[0])
+        self.mu_f_d=np.zeros(self.FaultX.shape[0])
+        
+        #Export friction coefficient variation here.
+        Dir=mainDir+'spatial/'
+        FileName=Dir+'friction_function.spatialdb'
+        f=open(FileName,'w')
+        f.close()
+        f=open(FileName,'a')
+        
+        headerFile ="""#SPATIAL.ascii 1
+        SimpleDB {
+          num-values =      4
+          value-names =  static-coefficient dynamic-coefficient slip-weakening-parameter cohesion
+          value-units =   none none  m Pa
+          num-locs =  98
+          data-dim =    1
+          space-dim =    2
+          cs-data = cartesian {
+          to-meters = 1
+          space-dim = 2
+        }
+        }
+        
+        """
+        
+        #print headerFile
+        f.write(headerFile)
+        
+        count=0
+        for i in range(0,self.mu_f_d.shape[0]):
+            
+            
+            if self.FaultX[i,0] <= -50e3:
+                #self.mu_f[i]=mu
+                self.mu_f_s[i]=0.7
+                self.mu_f_d[i]=0.65
+                #mu=self.mu_f_s[i]
+                #print self.mu_f_s
+                
+                outstring = str(self.FaultX[i,0])+ ' '+str(self.FaultY[i,0])+ ' ' +str(self.mu_f_s[i])+ ' ' + str(self.mu_f_d[i]) + ' 0.05  0 \n' 
+            
+            elif self.FaultX[i,0] > -50e3 and self.FaultX[i,0] < 100e3 :
+                #self.mu_f[i]=mu
+                self.mu_f_s[i]=mu_s*np.exp(a*(xcoord[i]/1e3 - xcoord[0]/1e3))
+                self.mu_f_d[i]=mu_d*np.exp(b*xcoord[i]/1e3)
+                mu=self.mu_f_s[i]
+                
+                outstring = str(self.FaultX[i,0])+ ' '+str(self.FaultY[i,0])+ ' ' +str(self.mu_f_s[i])+ ' ' + str(self.mu_f_d[i]) + ' 0.05  0 \n' 
+            else:
+                #print xcoord[i]
+                self.mu_f_s[i]=mu
+                self.mu_f_d[i]=mu
+                #mu_f[i]=mu
+                outstring = str(self.FaultX[i,0])+ ' '+str(self.FaultY[i,0])+ ' ' + str(self.mu_f_s[i]) + ' ' + str(self.mu_f_s[i]) +   ' 0.05  0 \n' 
+                
+            #print outstring
+            f.write(outstring)
+                
+        f.close()
+        
+        
+        print "Number of values on the Fault traction file ==",i+1
+        print "Make sure you edit the Pylith File to reflect the numbe rows of your file"
+        
+        figN=int(np.random.rand(1)*500)
+        
+        plt.figure(figN)
+        #plt.rc('text',usetext=True)
+        plt.plot(self.FaultX/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
+        plt.plot(self.FaultX/1e3, self.mu_f_d[:],'-k',linewidth=2,label='$\mu_d$')
+        #plt.plot(self.FaultX/1e3, mu_s*np.ones(self.FaultX.shape[0]),'-k', linewidth=2, label='$\mu_d$')
+        plt.legend(loc='upper right')
+        plt.xlabel('X position along fault [km]')
+        plt.ylabel('friction coefficient')
+        plt.grid()
+        plt.savefig(OutputNameFig,format='eps',dpi=1000)
+        plt.show()
+        
+    def FrictionTimeWeakeningFunction(self, mainDir,a, mu_s,mu_d, TimeWeakening):
+        #This class creates variation on the friction coefficient values.
+        #mu_s - static friction coefficient
+        #mu_d - dynamic friction coefficient
+        #a = exponential decay coefficient
+        
+        OutputNameFig=mainDir+'./Figures/TimeWeakening_Friction_Coefficient.eps'
+        
+        
+        xcoord= self.FaultX
+        const=xcoord[0]
+        xcoord=np.abs(xcoord[0]) + xcoord
+        
+        #mu_f=mu*np.exp(a*xcoord)
+        self.mu_f=mu_s*np.ones(self.FaultX.shape[0])
+        
+        #Export friction coefficient variation here.
+        Dir=mainDir+'spatial/'
+        FileName=Dir+'friction_function.spatialdb'
+        f=open(FileName,'w')
+        f.close()
+        f=open(FileName,'a')
+        
+        headerFile ="""#SPATIAL.ascii 1
+        SimpleDB {
+          num-values =      4
+          value-names =  static-coefficient dynamic-coefficient time-weakening-parameter cohesion
+          value-units =   none none  year Pa
+          num-locs =  69
+          data-dim =    1
+          space-dim =    2
+          cs-data = cartesian {
+          to-meters = 1
+          space-dim = 2
+        }
+        }
+        
+        """
+        
+        #print headerFile
+        f.write(headerFile)
+        
+        count=0
+        for i in range(0,self.mu_f.shape[0]):
+            
+            if xcoord[i] <= 250e3:
+                #self.mu_f[i]=mu
+                self.mu_f[i]=mu_d*np.exp(a*xcoord[i]/1e3)
+                outstring = str(self.FaultX[i,0])+ ' ' +str(self.FaultY[i,0])+ ' ' +str(mu_s)+ ' ' + str(self.mu_f[i]) + ' ' + str(TimeWeakening) + ' 0 \n' 
+            else:
+                #print xcoord[i]
+                self.mu_f[i]=mu_s
+                #mu_f[i]=mu
+                outstring = str(self.FaultX[i,0])+ ' ' +str(self.FaultY[i,0])+ ' ' +str(mu_s)+ ' ' + str(self.mu_f[i]) + ' ' + str(TimeWeakening) + ' 0 \n' 
+                
+            #print outstring
+            f.write(outstring)
+                
+        f.close()
+        
+        
+        print "Number of values on the Fault traction file ==",i+1
+        print "Make sure you edit the Pylith File to reflect the numbe rows of your file"
+        
+        figN=int(np.random.rand(1)*500)
+        
+        plt.figure(figN)
+        #plt.rc('text',usetext=True)
+        plt.plot(self.FaultX/1e3, self.mu_f[:],'-b',linewidth=2,label='$\mu_s$')
+        plt.plot(self.FaultX/1e3, mu_s*np.ones(self.FaultX.shape[0]),'-k', linewidth=2, label='$\mu_d$')
+        plt.legend(loc='upper right')
+        plt.xlabel('X position along fault [km]')
+        plt.ylabel('friction coefficient')
+        plt.grid()
+        plt.savefig(OutputNameFig,format='eps',dpi=1000)
+        plt.show()
         
     def FindIndex(self,xcoord):
         #Xcoord=-10 #X coordinate in km to plot result.
@@ -320,6 +724,62 @@ class PyLith_JS():
         plt.show()
         '''
     
+    def CreateInitialFaultStress(self, mainDir, mu, Coeff):
+        
+        ##################Export Fault Stress to be used as initial value for pylith
+        #Coeff = 0.95 #Amount to decrease the normal stress
+        
+        OutputNameFig=mainDir+'./Figures/Fault_Initial_Stress.eps'
+        
+        Dir=mainDir+'spatial/'
+        FileName=Dir+'Fault_Initial_Stress.spatialdb'
+        f=open(FileName,'w')
+        f.close()
+        f=open(FileName,'a')
+        
+        headerFile ="""#SPATIAL.ascii 1
+        SimpleDB {
+          num-values =      2
+          value-names =  traction-shear traction-normal  
+          value-units =   MPa MPa
+          num-locs =  69
+          data-dim =    1
+          space-dim =    2
+          cs-data = cartesian {
+          to-meters = 1
+          space-dim = 2
+        }
+        }
+        
+        """
+        
+        #print headerFile
+        f.write(headerFile)
+        
+        count=0
+        for i in range(0,self.FaultTraction2.shape[0]):
+            
+            outstring = str(self.FaultX[i,0])+ ' '+str(self.FaultY[i,0])+ ' ' + str(mu[i]*self.FaultTraction2[i,0]*Coeff) + '  0 \n' 
+                
+            #print outstring
+            f.write(outstring)
+                
+        f.close()
+        print "Number of values on the Fault traction file ==",i+1
+        
+        figN=int(np.random.rand(1)*500)
+        plt.figure(figN)
+        plt.plot(self.FaultX/1e3,np.abs(mu*self.FaultTraction2[:,0]),'-b',linewidth=2, label='Failure Criteria')
+        plt.plot(self.FaultX/1e3,np.abs(mu*self.FaultTraction2[:,0]*Coeff),'-k',linewidth=2, label='Initial shear stress')
+        plt.legend(loc='upper left')
+        plt.xlabel('X distance along fault [km]')
+        plt.ylabel('stress [MPa]')
+        plt.grid()
+        plt.savefig(OutputNameFig,format='eps',dpi=1000)
+        plt.show()
+    
+        
+        
 
     def GetIndexOfSSEOccurrence(self,mainDir,pos):
         
@@ -963,7 +1423,7 @@ class PyLith_JS():
             self.FindIndex(Loc[k])
             i=self.index;
             
-            x=self.FaultTime[iStart:iEnd]*1e3
+            x=self.FaultTime[iStart:iEnd]
             y=self.disp1[i,iStart:iEnd]-self.disp1[i,0]
             y=y
             #print x.shape, y.shape
@@ -973,11 +1433,10 @@ class PyLith_JS():
             #x=np.diff(self.FaultTime)
             #y=self.disp1[i,1:]-self.disp1[i,0]
             #deriv=np.gradient(y,x)
-            #print self.FaultTime.shape, self.disp1.shape
             
             plt.figure(figN)
-            plt.plot(self.FaultTime[:]*1e3,(self.disp1[i,:]-self.disp1[i,0]),'-',linewidth=2,label='Loc='+str(Loc[k])+' km')
-            plt.plot(x,p(x),'--',label='slope='+str(np.around(z[0],3))+ ' m/year', linewidth=3)
+            plt.plot(self.FaultTime[:],(self.disp1[i,:]-self.disp1[i,0]),'-',linewidth=2,label='Loc='+str(Loc[k])+' km')
+            plt.plot(x,p(x),'-',label='slope='+str(np.around(z[0],3))+ ' m/year', linewidth=3)
             #plt.plot(self.FaultTime[1:],deriv*100,linewidth=2, label='Loc. ='+str(int(self.FaultX[i,0]/1e3))+' km')
             plt.xlabel('time [years]')
             plt.ylabel('Slip  [m]')
@@ -989,7 +1448,7 @@ class PyLith_JS():
             plt.grid(True)
         
         
-        plt.savefig(OutputNameFig,format='eps',dpi=1200)
+        plt.savefig(OutputNameFig,format='eps',dpi=1000)
         plt.show()   
         
     def PlotMeasureSlopesGPSDisplacement(self, mainDir, startyear, endyear, startyearZoom, endyearZoom):
@@ -1310,7 +1769,7 @@ class PyLith_JS():
         #axarr[1].set_ylim([0,1])
         axarr[0].invert_yaxis()
         axarr[1].invert_yaxis()
-        plt.xlim([self.FaultX[0]/1e3, self.FaultX[-1]/1e3])
+        plt.xlim([self.FaultX[0,0]/1e3, self.FaultX[-1,0]/1e3])
         plt.gca().invert_yaxis()
         plt.xlabel('X [km]',fontsize=22)
         axarr[0].set_ylabel('Z [km]',fontsize=22)
@@ -1351,7 +1810,7 @@ class PyLith_JS():
         ax[0].plot(self.FaultX/1e3, self.FaultY/1e3-8,'--k', linewidth=1.5)
         ax[0].set_ylim([0,-80])
         ax[0].invert_yaxis()
-        #ax[0].xlim([self.FaultX[0]/1e3, self.FaultX[-1]/1e3])
+        #ax[0].xlim([self.FaultX[0,0]/1e3, self.FaultX[-1,0]/1e3])
         plt.gca().invert_yaxis()
         #ax[0].set_xlabel('X [km]',fontsize=22)
         ax[0].set_ylabel('Z [km]',fontsize=22)
@@ -1369,7 +1828,7 @@ class PyLith_JS():
         #plt.gca().invert_yaxis()
             
         for k in range(0,ind.shape[1]):
-            #print self.disp1.shape, self.FaultX.shape
+            print self.disp1.shape, self.FaultX.shape
             
             ax[1].plot(self.FaultX/1e3, self.disp1[ :, self.SSEind[ind[0,k],1] ] - self.disp1[ :, self.SSEind[ind[0,k],0] ], linewidth=2 )
             #plt.gca().invert_yaxis()
@@ -1383,7 +1842,7 @@ class PyLith_JS():
             ax[1].tick_params(labelsize=16)
         
         ax[1].invert_yaxis()
-        ax[1].set_ylim([0,0.2])
+        ax[1].set_ylim([0,50])
             #plt.gca().invert_yaxis()
             
             
@@ -1399,7 +1858,7 @@ class PyLith_JS():
         #Fault Area
         FaultArea=np.sum(np.sqrt(self.FaultX**2 + self.FaultY**2))
         
-        p1=  np.sqrt((self.FaultX[0]/1.0e3)**2.0 + (self.FaultY[0,0]/1.0e3- (-40))**2.0)
+        p1=  np.sqrt((self.FaultX[0,0]/1.0e3)**2.0 + (self.FaultY[0,0]/1.0e3- (-40))**2.0)
         p2= 200.0
         FaultArea= (p1+p2)*1.0e3  #Fault Area in meters
         
