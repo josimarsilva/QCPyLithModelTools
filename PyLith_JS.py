@@ -444,61 +444,7 @@ class PyLith_JS():
         tmp=timefinal[1:]
         self.Time=np.array(tmp)  
            
-    def PlotDisplacementTimeSeries(self, OutputDir,FigName):
-            #Plot GPS displacement from model and data.
-            figN=int(np.random.rand(1)*500)
-            
-            OutputName = OutputDir + FigName+'.eps'
-            
-            #legendLabels=np.zeros(self.Xtime.shape[1])
-            
-            minYear=self.year[1,0]
-            MaxYear=self.year[-1,0]
-            #MaxYear=minYear+15
-            
-            for pos in range(0,self.Xtime.shape[1]):
-                
-                FigNumber = 1
-                xlabel='time [Kyears]'
-                ylabel='X displacement [m]' 
-                #text='Xcoord= '+str(self.Xpos[pos]/1e3)+' km'
-                
-                print pos
-                #legendLabels[pos]=self.Xpos[pos]/1e3
-                               
-                plt.figure(figN,[15,8])
-                ax=plt.subplot(1,2,1)
-                #plt.plot(minYear+self.year[:,pos], self.intercept[pos] + self.Xtime[:,pos]-self.Xtime[0,pos],'-',linewidth=1.5,label=self.nameGPS[pos])
-                plt.plot(self.year[:,pos],  self.Xtime[:,pos]-self.Xtime[0,pos],'-',linewidth=1.5,label=self.nameGPS[pos])
-                #plt.plot(self.year[:,pos],  self.intercept[pos] + self.XtimeNoTrend[:,pos],'-',linewidth=2,label=self.nameGPS[pos])
-                #plt.plot(self.timeGPS[:,pos],self.dispGPS[:,pos],'s' , label=self.nameGPS[pos]   )
-                plt.xlabel(xlabel,fontsize=22)
-                plt.ylabel('X displacement [m]' ,fontsize=22)
-                plt.xlim([minYear,MaxYear])
-                #plt.ylim([-200,400])
-                #plt.ylim([-10,10])
-                plt.legend(loc='upper left',fontsize=22)
-                plt.tick_params(labelsize=16)
-                plt.grid(True)
-                
-                plt.subplot(1,2,2)
-                plt.plot(self.year[:,pos], self.Ytime[:,pos] - self.Ytime[0,pos],'-',linewidth=1.5, label=self.nameGPS[pos])
-                plt.xlabel(xlabel)
-                plt.ylabel('Z displacement [m]',fontsize=22 )
-                #plt.xlim([self.year[1,pos],self.year[-2,pos]])
-                plt.xlim([minYear,MaxYear])
-                plt.legend(loc='upper left',fontsize=22)
-                plt.grid(True)
-                
-                if (pos==self.Xtime.shape[1]-1):
-                    print "Saving Figure = ", FigNumber
-                    plt.savefig(OutputName,format='eps',dpi=1000)
-                    #pp.savefig()
-                    
-                
-           
-            plt.show()
-            
+               
             
             
     def PlotFaultSlipVersusTime(self, OutputDir,xcoord):
@@ -963,21 +909,22 @@ class PyLith_JS():
             self.FindIndex(Loc[k])
             i=self.index;
             
-            x=self.FaultTime[iStart:iEnd]*1e3
+            x=self.FaultTime[iStart:iEnd]
             y=self.disp1[i,iStart:iEnd]-self.disp1[i,0]
             y=y
             #print x.shape, y.shape
             z=np.polyfit(x,y,1)
             p=np.poly1d(z)
-            
+
+            #print x
             #x=np.diff(self.FaultTime)
             #y=self.disp1[i,1:]-self.disp1[i,0]
             #deriv=np.gradient(y,x)
             #print self.FaultTime.shape, self.disp1.shape
             
             plt.figure(figN)
-            plt.plot(self.FaultTime[:]*1e3,(self.disp1[i,:]-self.disp1[i,0]),'-',linewidth=2,label='Loc='+str(Loc[k])+' km')
-            plt.plot(x,p(x),'--',label='slope='+str(np.around(z[0],3))+ ' m/year', linewidth=3)
+            plt.plot(self.FaultTime[:],(self.disp1[i,:]-self.disp1[i,0]),'-',linewidth=2,label='Loc='+str(Loc[k])+' km')
+            plt.plot(x,p(x),'--',label='slope='+str(np.around(z[0],3)/1e3)+ ' m/year', linewidth=3)
             #plt.plot(self.FaultTime[1:],deriv*100,linewidth=2, label='Loc. ='+str(int(self.FaultX[i,0]/1e3))+' km')
             plt.xlabel('time [years]')
             plt.ylabel('Slip  [m]')
@@ -990,7 +937,7 @@ class PyLith_JS():
         
         
         plt.savefig(OutputNameFig,format='eps',dpi=1200)
-        plt.show()   
+        #plt.show()   
         
     def PlotMeasureSlopesGPSDisplacement(self, mainDir, startyear, endyear, startyearZoom, endyearZoom):
         

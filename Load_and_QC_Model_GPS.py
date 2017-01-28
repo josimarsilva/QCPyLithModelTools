@@ -12,7 +12,7 @@ from Load_and_QC_Model_GPS import *
 ### Here I inherit some functions from the PyLith_JS class
 class Load_and_QC_Model_GPS(PyLith_JS):
 
-    def Load_Fault_Data_Exported_from_H5(self,mainDir):
+    def Load_Fault_Data_Exported_from_H5(self,mainDir, TimeBegin , TimeEnd):
         
         dir=mainDir+'Export/data/'
         FileName1=dir + 'Export_Fault_Slip_X.npy'
@@ -20,15 +20,48 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         FileName3=dir + 'Export_Fault_Shear_Stress.npy'
         FileName4=dir + 'Export_Fault_Normal_Stress.npy'
         FileName5=dir + 'Fault_Geometry.npy'
+        FileName6=dir + 'Time.npy'
 
         self.disp1=np.load(FileName1)
         self.disp2=np.load(FileName2)
         self.FaultTraction1=np.load(FileName3)*1e-6
         self.FaultTraction2=np.load(FileName4)*1e-6
-
         FaultGeometry=np.load(FileName5)
+        
+
+        
         self.FaultX=FaultGeometry[0,:]
         self.FaultY=FaultGeometry[1,:]
+
+        t=np.load(FileName6)
+        self.FaultTime=(t[:,0,0]*3.171e-8)/1e3
+
+        disp1Final=np.zeros(self.disp1.shape)
+        disp2Final=np.zeros(self.disp1.shape)
+        FaultTraction1Final=np.zeros(self.disp1.shape)
+        FaultTraction2Final=np.zeros(self.disp1.shape)
+        FaultTimeFinal=np.zeros(self.FaultTime.shape)
+        
+        count=0
+        for i in range(0,self.FaultTime.shape[0]):
+            
+            if self.FaultTime[i] >= TimeBegin and self.FaultTime[i] <= TimeEnd:
+                disp1Final[:,count]=self.disp1[:,i]
+                disp2Final[:,count]=self.disp2[:,i]
+                FaultTraction1Final[:,count]=self.FaultTraction1[:,i]
+                FaultTraction2Final[:,count]=self.FaultTraction2[:,i]
+                FaultTimeFinal[count]=self.FaultTime[i]
+                count=count+1
+
+        self.disp1=np.resize(disp1Final,[disp1Final.shape[0],count-1])
+        self.disp2=np.resize(disp2Final,[disp2Final.shape[0],count-1])
+        
+        self.FaultTraction1=np.resize(FaultTraction1Final,[disp1Final.shape[0],count-1])
+        self.FaultTraction1=np.resize(FaultTraction2Final,[disp1Final.shape[0],count-1])
+
+        self.FaultTime=np.resize(FaultTimeFinal,count-1)
+
+
         
     
     def Load_Surface_at_GPS_Locations(self,InputFileNameHorizontal, InputFileNameVertical, TimeBegin, TimeEnd ):
@@ -66,8 +99,8 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         self.year=np.zeros([count-1,3])
         self.year=t[0:count-1,:]
 
-        self.FaultTime=self.year[:,0]
-        self.FaultTime=np.append(self.FaultTime, self.FaultTime[-1])
+        #self.FaultTime=self.year[:,0]
+        #self.FaultTime=np.append(self.FaultTime, self.FaultTime[-1])
 
     
     def PlotDisplacementTimeSeries(self, OutputDir,FigName):
@@ -118,14 +151,14 @@ class Load_and_QC_Model_GPS(PyLith_JS):
                 
                 if (pos==self.Xtime.shape[1]-1):
                     print "Saving Figure = ", FigNumber
-                    plt.savefig(OutputName,format='eps',dpi=1000)
+                    plt.savefig(OutputName,format='eps',dpi=1200)
                     #pp.savefig()
                     
                 
            
-            plt.show()
+           
 
-    def GetIndexOfSSEOccurrence(self,mainDir,pos, dt, mu, sigma):
+    def GetIndexOfSSEOccurrence(self,mainDir,pos, dt, mu):
 
         ##Compute time and indexes wher SSE events occurs, based on GPS data.
 
@@ -194,7 +227,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         plt.plot(self.year[SSEind[:,1],0],self.Xtime[SSEind[:,1],0],'bs')
         plt.xlabel('time [Kyears]', fontsize=17)
         plt.ylabel('X displacement', fontsize=17)
-        plt.title("dt="+str(dt)+", loc="+str(mu)+", std="+str(sigma))
+        #plt.title("dt="+str(dt)+", loc="+str(mu)+", std="+str(sigma))
         plt.legend(loc='upper left')
         plt.grid(True)
         plt.tick_params(labelsize=17)
@@ -205,7 +238,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         plt.plot(self.year[SSEind[:,1],1],self.Xtime[SSEind[:,1],1],'bs')
         plt.xlabel('time [Kyears]', fontsize=17)
         plt.ylabel('X displacement', fontsize=17)
-        plt.title("dt="+str(dt)+", loc="+str(mu)+", std="+str(sigma))
+        #plt.title("dt="+str(dt)+", loc="+str(mu)+", std="+str(sigma))
         plt.legend(loc='upper left')
         plt.grid(True)
         plt.tick_params(labelsize=17)
@@ -216,7 +249,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         plt.plot(self.year[SSEind[:,1],2],self.Xtime[SSEind[:,1],2],'bs')
         plt.xlabel('time [Kyears]', fontsize=17)
         plt.ylabel('X displacement', fontsize=17)
-        plt.title("dt="+str(dt)+", loc="+str(mu)+", std="+str(sigma))
+        #plt.title("dt="+str(dt)+", loc="+str(mu)+", std="+str(sigma))
         plt.legend(loc='upper left')
         plt.grid(True)
         plt.tick_params(labelsize=17)

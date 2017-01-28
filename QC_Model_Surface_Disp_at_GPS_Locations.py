@@ -2,6 +2,8 @@ import csv
 import numpy as np
 from numpy import genfromtxt, poly1d
 import sys
+import os
+import subprocess
 import os.path
 import math
 import matplotlib.pyplot as plt
@@ -36,14 +38,15 @@ def main():
     Tend=20000
     dt="0.25"
     mu=0
-    sigma=40
-    friction_mag=0.06
-    friction_constant=0.05
-    exponent="-0.03"
+    mu_s="0.10"
+    mu_s_constant=0.02
+    mu_d=0.07
+    mu_d_constant=0.02
+    exponent="-0.07"
     
     #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/mu_"+str(mu)+"/sigma_"+str(sigma)+"/" 
     #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/exponent_"+str(exponent)+"/" 
-    mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/exponent_"+str(exponent)+"/" 
+    mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/mu_s_"+str(mu_s)+"/mu_s_constant_"+str(mu_s_constant)+"/mu_d_"+str(mu_d)+"/mu_d_constant_"+str(mu_d_constant)+"/exponent_"+str(exponent)+"/" 
 
 
     print mainDir
@@ -51,8 +54,14 @@ def main():
     dir=mainDir+'Export/data/'
     data=Load_and_QC_Model_GPS()
 
+    ##HEre is the time to be loaded
+    TimeBegin=10
+    TimeEnd=20
+
     ### Load Fault information here
-    data.Load_Fault_Data_Exported_from_H5(mainDir)
+    data.Load_Fault_Data_Exported_from_H5(mainDir, TimeBegin, TimeEnd)
+    print data.disp1.shape, data.FaultTraction1.shape
+    
       
     #Load fault geometry information here.
     OutputDir=mainDir+'Figures/'
@@ -62,8 +71,7 @@ def main():
     data.PlotGeometryWithFriction(mainDir)
     plt.show()
 
-    TimeBegin=0
-    TimeEnd=100
+    
     
     InputFileNameHorizontal=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Horizontal.dat"
     InputFileNameVertical=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Vertical.dat"
@@ -71,6 +79,7 @@ def main():
     ##Load Model surface displacemet at GPS stations
     data.Load_Surface_at_GPS_Locations(InputFileNameHorizontal, InputFileNameVertical, TimeBegin, TimeEnd )
 
+        
     print "Number of Time Steps= ", data.Xtime.shape[0]
 
     ########### GPS data Information
@@ -87,21 +96,26 @@ def main():
     Loc=np.array([-139,200])
     startyear=np.array([0,0])
     endyear=np.array([200e3,200e3])
-    #data.PlotPointFaultPointDisplacementRate(mainDir, Loc, startyear, endyear)
+    data.PlotPointFaultPointDisplacementRate(mainDir, Loc, startyear, endyear)
+   
 
     pos=0
-    data.GetIndexOfSSEOccurrence(mainDir,pos, dt, mu, sigma)
-    #data.PlotSSEIntervalOccurence(mainDir,pos)
-
+    data.GetIndexOfSSEOccurrence(mainDir,pos, dt, mu)
+    data.PlotSSEIntervalOccurence(mainDir,pos)
+    #plt.show()
+    
     period_begin=0
     period_end=100000
-    #data.PlotFaultSlipDuringSSEAndGeometry(mainDir,period_begin, period_end)
-
+    data.PlotFaultSlipDuringSSEAndGeometry(mainDir,period_begin, period_end)
+    plt.show()
+    return
+    
     #Detrend Surface Displacement
     degree=1
     data.DetrendSurfaceDisplacement(degree)
 
-    #####################3
+
+    #################################3
     mu=data.mu_f_d
     
     OutputDir=mainDir + 'Movies/'
@@ -116,14 +130,15 @@ def main():
     #ax = f.add_subplot(211)
     
     #fig1=plt.figure(1232)
-    imax=data.SSEind[19,1]
+    #imax=data.SSEind[19,1]
     imax=0
 
-    #print data.SSEind[:]
     
+    imaxChoice=np.array([data.SSEind[5,1], data.SSEind[9,1]])
     #for imax in range(0,Time.shape[0],step):
-    for imax in data.SSEind[:,1]:
-            
+    for imax in imaxChoice:
+    #for imax in data.SSEind[:,1]:
+        print "Plotting even = ", imax  
         #print imax
         #f,ax=plt.subplots(3,sharex=True)
         #f,ax=plt.subplots(3,1,sharex=True,figsize=(15,15))
@@ -167,7 +182,7 @@ def main():
         lns3=ax[1].plot(xcoord,shear_stress_CFF + mu*normal_stress_CFF,'-b',linewidth=2,label='CFF')
         #ax[1].set_xlabel('X distance along fault [km]', fontsize=16)
         ax[1].set_ylabel('stress [MPa]', fontsize=16)
-        ax[1].set_ylim([-50,50])
+        ax[1].set_ylim([-0.1,0.1])
         ax[1].tick_params(labelsize=16)
         ax[1].grid()
         
@@ -178,7 +193,7 @@ def main():
         ax[1].set_xlabel('X distance along fault [km]', fontsize=16)
         #ax[1].set_axis_off()
         
-        ax[1].set_ylim([0,35])
+        ax[1].set_ylim([0,0.2])
         ax[1].set_ylabel('fault slip during SSE [m]', fontsize=16)
        
         
@@ -194,7 +209,7 @@ def main():
         lns3=ax[2].plot(xcoord,shear_stress_CFF + mu*normal_stress_CFF,'-b',linewidth=2,label='shear stress')
         ax[2].set_xlabel('X distance along fault [km]', fontsize=16)
         ax[2].set_ylabel('stress [MPa]', fontsize=16)
-        ax[2].set_ylim([-50,50])
+        ax[2].set_ylim([-0.1,0.1])
         ax[2].tick_params(labelsize=16)
         ax[2].grid()
         
@@ -205,7 +220,7 @@ def main():
         ax[2].set_xlabel('X distance along fault [km]', fontsize=16)
         #ax[1].set_axis_off()
         
-        ax[2].set_ylim([-5,5])
+        ax[2].set_ylim([-0.05,0.05])
         ax[2].set_ylabel('stress [MPa]', fontsize=16)
        
         
@@ -224,7 +239,7 @@ def main():
         ax[3].invert_yaxis()
         ax[3].set_xlabel('time [Kyears]', fontsize=16)
         ax[3].set_ylabel('X displacement [m]', fontsize=16)
-        ax[3].set_ylim([-6,6])
+        ax[3].set_ylim([-10,10])
         ax[3].set_xlim([data.year[1,0],data.year[-1,0]])
         ax[3].tick_params(labelsize=16)
         
@@ -255,17 +270,21 @@ def main():
             plt.grid(True)
         '''  
         
-        OutputNameFig=OutputDir + 'Stress_Fig_'+str(countFig)+'.eps'
+        #OutputNameFig=OutputDir + 'Stress_Fig_'+str(countFig)+'.eps'
+        OutputNameFig=OutputDir + 'Stress_Fig_'+str(countFig)+'.jpg'
         countFig=countFig+1
         #print OutputNameFig
-        plt.savefig(OutputNameFig,format='eps',dpi=5000)
-        #plt.pause(0.002)
+        #plt.savefig(OutputNameFig,format='eps',dpi=5000)
+        plt.savefig(OutputNameFig,format='jpg')
+        plt.pause(0.002)
         plt.clf()
 
     print 'finished plotting'
-    #plt.show()
-    
-    
     plt.show()
+
+    #os.chdir(OutputDir)
+    #subprocess.call(['./MakeMovie.sh'])
+    
+    #plt.show()
 
 main()

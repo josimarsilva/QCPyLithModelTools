@@ -167,6 +167,7 @@ class Export_H5_Class():
         FileName3=dir + 'Export_Fault_Shear_Stress'
         FileName4=dir + 'Export_Fault_Normal_Stress'
         FileName5=dir + 'Fault_Geometry'
+        FileName6=dir + 'Time'
         
         print "Saving File: ", FileName1
         print "Saving File: ", FileName2
@@ -178,6 +179,7 @@ class Export_H5_Class():
         np.save(FileName3,FaultTraction1)
         np.save(FileName4,FaultTraction2)
         np.save(FileName5,FaultGeometry)
+        np.save(FileName6,time)
 
         
    
