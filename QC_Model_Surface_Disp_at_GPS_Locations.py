@@ -16,93 +16,108 @@ from matplotlib import rc
 
 def main():
 
-    '''
-    exponent=-0.03
-    friction_min_value=0.05
-    mu_s=0.6
-    xtmp=np.arange(0,340,1)
-    y=friction_min_value+mu_s*np.exp(exponent*xtmp)
-
-    plt.figure(1)
-    plt.plot(xtmp,y)
-    plt.grid(True)
-    plt.show()
-
-    return
-    '''
 
     #TimeWindow=169000
     #TimeWindow=88000
     #TimeWindow=100000
-    Tbegin=10000
-    Tend=20000
-    dt="0.25"
-    mu=0
-    mu_s="0.10"
-    mu_s_constant=0.02
-    mu_d=0.07
-    mu_d_constant=0.02
+    Tbegin, Tend, dt = 10000, 20000, 0.25
+    
+    mu_s="0.07"
+    mu_s_constant=0.05
+    mu_d=0.05
+    mu_d_constant=0.05
     exponent="-0.07"
     
     #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/mu_"+str(mu)+"/sigma_"+str(sigma)+"/" 
     #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/exponent_"+str(exponent)+"/" 
     mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/mu_s_"+str(mu_s)+"/mu_s_constant_"+str(mu_s_constant)+"/mu_d_"+str(mu_d)+"/mu_d_constant_"+str(mu_d_constant)+"/exponent_"+str(exponent)+"/" 
+    dirGPS='/nobackup1/josimar/Projects/SlowEarthquakes/data/GPS/'
 
-
-    print mainDir
+    print "Main Dir = " mainDir
     
     dir=mainDir+'Export/data/'
     data=Load_and_QC_Model_GPS()
 
     ##HEre is the time to be loaded
-    TimeBegin=10
-    TimeEnd=20
+    TimeBegin, TimeEnd=10.25, 10.35
 
     ### Load Fault information here
     data.Load_Fault_Data_Exported_from_H5(mainDir, TimeBegin, TimeEnd)
-    print data.disp1.shape, data.FaultTraction1.shape
-    
       
     #Load fault geometry information here.
     OutputDir=mainDir+'Figures/'
     
     #read friction coefficient instead of creating a new one.
     data.ReadFrictionCoefficient(mainDir)
-    data.PlotGeometryWithFriction(mainDir)
-    plt.show()
+    #data.PlotGeometryWithFriction(mainDir)
+    #plt.show()
 
-    
-    
+        
     InputFileNameHorizontal=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Horizontal.dat"
     InputFileNameVertical=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Vertical.dat"
 
     ##Load Model surface displacemet at GPS stations
     data.Load_Surface_at_GPS_Locations(InputFileNameHorizontal, InputFileNameVertical, TimeBegin, TimeEnd )
 
-        
-    print "Number of Time Steps= ", data.Xtime.shape[0]
 
-    ########### GPS data Information
+    ########### Here it loads the DATA GPS data Information
     GPSname=["DOAR",  "MEZC", "IGUA"]
     data.nameGPS=GPSname
+    data.LoadGPSdata(dirGPS,GPSname)
 
-    #Plotting GPS time series
+    i=35
+    x=data.timeGPS[0:i,0]
+    y=data.dispGPS[0:i,0]
+
+    dt=0.025
+    xinterp=np.arange(x[0],x[-1],dt)
+    yinterp=np.interp(xinterp,x,y)
+    #print data.dispGPS
+    print data.timeGPS
+
+    plt.figure(1)
+    #plt.plot(data.timeGPS[:,0], data.dispGPS[:,0],'ks')
+    plt.plot(x,y,'ks')
+    plt.plot(xinterp,yinterp,'-r')
+    plt.xlim([2000,2015])
+    plt.show()
+    return
+       
+
+    #Plotting model GPS time series
     OutputDir=mainDir+'Figures/'
     FigName='GPS_displacement'
     #data.PlotDisplacementTimeSeries(OutputDir, FigName)
-
+    #plt.show()
 
     print "Plotting fault slip velocity at certain locations..."
     Loc=np.array([-139,200])
     startyear=np.array([0,0])
     endyear=np.array([200e3,200e3])
-    data.PlotPointFaultPointDisplacementRate(mainDir, Loc, startyear, endyear)
-   
+    #data.PlotPointFaultPointDisplacementRate(mainDir, Loc, startyear, endyear)
+    #plt.show()
 
     pos=0
-    data.GetIndexOfSSEOccurrence(mainDir,pos, dt, mu)
-    data.PlotSSEIntervalOccurence(mainDir,pos)
-    #plt.show()
+    data.GetIndexOfSSEOccurrence(mainDir,pos, dt)
+    #data.PlotSSEIntervalOccurence(mainDir,pos)
+
+    
+    amp=0.04
+    tmp1=np.abs(data.SSEamp[:,0] - amp)
+    ind = tmp1.argmin()
+    print "inde value",ind
+    print data.SSEamp[ind,0]
+
+    print "Time = ", data.SSEtime[ind,0]*1e3 -10 , data.SSEtime[ind,0]*1e3 +10
+
+    plt.figure(113)
+    plt.plot(data.year[:,0]*1e3, data.Xtime[:,0]-data.Xtime[0,0])
+    plt.xlim( data.SSEtime[ind,0]*1e3 -5 , data.SSEtime[ind,0]*1e3 +5)
+    plt.ylim([0.5, 1])
+    plt.show()
+    return
+    
+    return
     
     period_begin=0
     period_end=100000

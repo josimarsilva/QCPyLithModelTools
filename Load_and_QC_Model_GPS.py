@@ -27,7 +27,6 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         self.FaultTraction1=np.load(FileName3)*1e-6
         self.FaultTraction2=np.load(FileName4)*1e-6
         FaultGeometry=np.load(FileName5)
-        
 
         
         self.FaultX=FaultGeometry[0,:]
@@ -36,33 +35,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         t=np.load(FileName6)
         self.FaultTime=(t[:,0,0]*3.171e-8)/1e3
 
-        disp1Final=np.zeros(self.disp1.shape)
-        disp2Final=np.zeros(self.disp1.shape)
-        FaultTraction1Final=np.zeros(self.disp1.shape)
-        FaultTraction2Final=np.zeros(self.disp1.shape)
-        FaultTimeFinal=np.zeros(self.FaultTime.shape)
-        
-        count=0
-        for i in range(0,self.FaultTime.shape[0]):
-            
-            if self.FaultTime[i] >= TimeBegin and self.FaultTime[i] <= TimeEnd:
-                disp1Final[:,count]=self.disp1[:,i]
-                disp2Final[:,count]=self.disp2[:,i]
-                FaultTraction1Final[:,count]=self.FaultTraction1[:,i]
-                FaultTraction2Final[:,count]=self.FaultTraction2[:,i]
-                FaultTimeFinal[count]=self.FaultTime[i]
-                count=count+1
 
-        self.disp1=np.resize(disp1Final,[disp1Final.shape[0],count-1])
-        self.disp2=np.resize(disp2Final,[disp2Final.shape[0],count-1])
-        
-        self.FaultTraction1=np.resize(FaultTraction1Final,[disp1Final.shape[0],count-1])
-        self.FaultTraction1=np.resize(FaultTraction2Final,[disp1Final.shape[0],count-1])
-
-        self.FaultTime=np.resize(FaultTimeFinal,count-1)
-
-
-        
     
     def Load_Surface_at_GPS_Locations(self,InputFileNameHorizontal, InputFileNameVertical, TimeBegin, TimeEnd ):
         
@@ -158,7 +131,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
            
            
 
-    def GetIndexOfSSEOccurrence(self,mainDir,pos, dt, mu):
+    def GetIndexOfSSEOccurrence(self,mainDir,pos, dt):
 
         ##Compute time and indexes wher SSE events occurs, based on GPS data.
 
@@ -209,6 +182,23 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         self.SSEtime=SSEtime
         self.InterSSEduration=InterSSEduration
 
+        self.SSEamp=np.zeros([ self.SSEind.shape[0],self.Xtime.shape[1] ])
+        for i in range(0,self.Xtime.shape[1]):
+            self.SSEamp[:,i]= self.Xtime[ self.SSEind[:,0], i ] - self.Xtime[ self.SSEind[:,1], i ]
+
+        ###  The IDEA HERE IS TO FIND THE FAULT INDEXES ACCORDING TO THE self.SSETime
+        
+        #tdata=np.array((self.year[:,0]),dtype=float)
+        self.SSEindexFault=np.zeros([self.SSEind.shape[0], 2])
+        
+        for i in range(0,self.SSEtime.shape[0]):
+            tmp1 = np.abs(self.SSEtime[i,0] - self.FaultTime)
+            self.SSEindexFault[i,0]=tmp1.argmin()
+            
+            tmp2 = np.abs(self.SSEtime[i,1] - self.FaultTime)
+            self.SSEindexFault[i,1]=tmp2.argmin()
+        
+
         '''
         plt.figure(1)
         plt.plot(self.year[0:-1,pos],GPSXderivative,'-ks')
@@ -257,6 +247,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
 
         plt.savefig(OutputNameFig1,format='eps',dpi=1000)
 
+        '''
         figN=int(np.random.rand(1)*500)    
 
         plt.figure(figN+1)
@@ -270,7 +261,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         #plt.show()
 
         plt.savefig(OutputNameFig2,format='eps',dpi=1000)
-
+        '''
 
        
         

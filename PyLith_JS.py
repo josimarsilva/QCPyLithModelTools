@@ -16,9 +16,9 @@ class PyLith_JS():
 
         self.dispX=[]
     
-    def LoadGPSdata(self,dirName,basename,GPSintercept,GPSXcoord):
+    def LoadGPSdata(self,dirName,basename):
         
-        self.intercept=GPSintercept
+        #self.intercept=GPSintercept
         self.dispGPS=np.zeros([100,len(basename)])
         self.timeGPS=np.copy(self.dispGPS)
         
@@ -1283,11 +1283,11 @@ class PyLith_JS():
         ind=np.copy(test)
         
         #An SSE event will be given by:
-        #self.SSEind[ind[i],0] and self.SSEind[ind[i],1]
+        #self.SSEindexFault[ind[i],0] and self.SSEindexFault[ind[i],1]
         
-        print "Number of SSE events found with the specified periodicity=", self.SSEind[ind[0,:],1].shape[0]
+        print "Number of SSE events found with the specified periodicity=", self.SSEindexFault[ind[0,:],1].shape[0]
         
-        if self.SSEind[ind[0,:],1].shape[0] == 0:
+        if self.SSEindexFault[ind[0,:],1].shape[0] == 0:
             return
         
         f,ax=plt.subplots(2,sharex=True)
@@ -1316,14 +1316,18 @@ class PyLith_JS():
         #plt.gca().invert_yaxis()
             
         for k in range(0,ind.shape[1]):
+        #for k in range(0,self.SSEindexFault.shape[0]):
             #print self.disp1.shape, self.FaultX.shape
             
-            ax[1].plot(self.FaultX/1e3, self.disp1[ :, self.SSEind[ind[0,k],1] ] - self.disp1[ :, self.SSEind[ind[0,k],0] ], linewidth=2 )
+            #ax[1].plot(self.FaultX/1e3, self.disp1[ :, self.SSEindexFault[ind[0,k],1] ] - self.disp1[ :, self.SSEindexFault[ind[0,k],0] ], linewidth=2 )
+            slip= np.abs(self.disp1[ :, self.SSEindexFault[ind[0,k],1] ]) - np.abs(self.disp1[ :, self.SSEindexFault[ind[0,k],0] ])
+            ax[1].plot(self.FaultX/1e3, slip, linewidth=2 )
+            
             #plt.gca().invert_yaxis()
             #ax[1].invert_yaxis()
             ax[1].set_xlabel('X position along fault [km]', fontsize=18)
             ax[1].set_ylabel('Fault slip  [m]', fontsize=18)
-            #plt.title('time='+str(self.FaultTime[ self.SSEind[ind[0,k],1] ]))
+            #plt.title('time='+str(self.FaultTime[ self.SSEindexFault[ind[0,k],1] ]))
             
             ax[1].set_title('Fault slip during SSE events ', fontsize=18)
             ax[1].grid(True)
@@ -1432,7 +1436,7 @@ class PyLith_JS():
         ind=np.copy(test)
         
         #An SSE event will be given by:
-        #self.SSEind[ind[i],0] and self.SSEind[ind[i],1]
+        #self.SSEindFault[ind[i],0] and self.SSEind[ind[i],1]
         
         #print "Number of SSE events found with the specified periodicity=", self.SSEind[ind[0,:],1].shape[0]
         
