@@ -12,9 +12,9 @@ from Load_and_QC_Model_GPS import *
 ### Here I inherit some functions from the PyLith_JS class
 class Load_and_QC_Model_GPS(PyLith_JS):
 
-    def Load_Fault_Data_Exported_from_H5(self,mainDir, TimeBegin , TimeEnd):
+    def Load_Fault_Data_Exported_from_H5(self):
         
-        dir=mainDir+'Export/data/'
+        dir=self.mainDir+'Export/data/'
         FileName1=dir + 'Export_Fault_Slip_X.npy'
         FileName2=dir + 'Export_Fault_Slip_Z.npy'
         FileName3=dir + 'Export_Fault_Shear_Stress.npy'
@@ -37,7 +37,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
 
 
     
-    def Load_Surface_at_GPS_Locations(self,InputFileNameHorizontal, InputFileNameVertical, TimeBegin, TimeEnd ):
+    def Load_Surface_at_GPS_Locations(self,InputFileNameHorizontal, InputFileNameVertical ):
         
         #print "Loading ...", InputFileName
         tmpH=np.loadtxt(InputFileNameHorizontal,dtype=float, skiprows=1)
@@ -53,7 +53,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
             count=0
             for i in range(0,self.Xtime.shape[0]):
                 
-                if  tempYear[i] >= TimeBegin and tempYear[i] <= TimeEnd:
+                if  tempYear[i] >= self.TimeBegin and tempYear[i] <= self.TimeEnd:
                     
                     self.Xtime[count,pos]=tmpH[i,pos+1]
                     self.Ytime[count,pos]=tmpZ[i,pos+1]    ### Note that this is temporary until I fix the Z component
@@ -212,9 +212,9 @@ class Load_and_QC_Model_GPS(PyLith_JS):
 
         plt.figure(int(np.random.rand(1)*500),[17,14])
         plt.subplot(2,2,1)
-        plt.plot(self.year[:,0],self.Xtime[:,0],'-k',label=self.nameGPS[0])
-        plt.plot(self.year[SSEind[:,0],0],self.Xtime[SSEind[:,0],0],'rs')
-        plt.plot(self.year[SSEind[:,1],0],self.Xtime[SSEind[:,1],0],'bs')
+        plt.plot(self.year[:,0],self.Xtime[:,0] - self.Xtime[0,0] ,'-k',label=self.nameGPS[0])
+        plt.plot(self.year[SSEind[:,0],0],self.Xtime[SSEind[:,0],0] - self.Xtime[0,0] ,'rs')
+        plt.plot(self.year[SSEind[:,1],0],self.Xtime[SSEind[:,1],0] - self.Xtime[0,0] ,'bs')
         plt.xlabel('time [Kyears]', fontsize=17)
         plt.ylabel('X displacement', fontsize=17)
         #plt.title("dt="+str(dt)+", loc="+str(mu)+", std="+str(sigma))
@@ -223,9 +223,9 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         plt.tick_params(labelsize=17)
 
         plt.subplot(2,2,2)
-        plt.plot(self.year[:,1],self.Xtime[:,1],'-k', label=self.nameGPS[1])
-        plt.plot(self.year[SSEind[:,0],1],self.Xtime[SSEind[:,0],1],'rs')
-        plt.plot(self.year[SSEind[:,1],1],self.Xtime[SSEind[:,1],1],'bs')
+        plt.plot(self.year[:,1],self.Xtime[:,1] - self.Xtime[0,1],'-k', label=self.nameGPS[1])
+        plt.plot(self.year[SSEind[:,0],1],self.Xtime[SSEind[:,0],1] - self.Xtime[0,1] ,'rs')
+        plt.plot(self.year[SSEind[:,1],1],self.Xtime[SSEind[:,1],1] - self.Xtime[0,1] ,'bs')
         plt.xlabel('time [Kyears]', fontsize=17)
         plt.ylabel('X displacement', fontsize=17)
         #plt.title("dt="+str(dt)+", loc="+str(mu)+", std="+str(sigma))
@@ -234,9 +234,9 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         plt.tick_params(labelsize=17)
 
         plt.subplot(2,2,3)
-        plt.plot(self.year[:,2],self.Xtime[:,2],'-k', label=self.nameGPS[2])
-        plt.plot(self.year[SSEind[:,0],2],self.Xtime[SSEind[:,0],2],'rs')
-        plt.plot(self.year[SSEind[:,1],2],self.Xtime[SSEind[:,1],2],'bs')
+        plt.plot(self.year[:,2],self.Xtime[:,2] - self.Xtime[0,2],'-k', label=self.nameGPS[2])
+        plt.plot(self.year[SSEind[:,0],2],self.Xtime[SSEind[:,0],2] - self.Xtime[0,2],'rs')
+        plt.plot(self.year[SSEind[:,1],2],self.Xtime[SSEind[:,1],2] - self.Xtime[0,2],'bs')
         plt.xlabel('time [Kyears]', fontsize=17)
         plt.ylabel('X displacement', fontsize=17)
         #plt.title("dt="+str(dt)+", loc="+str(mu)+", std="+str(sigma))

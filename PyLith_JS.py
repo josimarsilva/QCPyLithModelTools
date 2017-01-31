@@ -7,15 +7,19 @@ import math
 import matplotlib.pyplot as plt
 from scipy import signal
 from PyLith_JS import *
+from MathFunctions_JS import *
 
 
-class PyLith_JS():
+class PyLith_JS(MathFunctions_JS):
      
     #def __init__(self,dirName,basename,number):
-    def __init__(self):
+    def __init__(self, mainDir, TimeBegin, TimeEnd):
 
-        self.dispX=[]
+        self.mainDir=mainDir
+        self.TimeBegin=TimeBegin
+        self.TimeEnd=TimeEnd
     
+        
     def LoadGPSdata(self,dirName,basename):
         
         #self.intercept=GPSintercept
@@ -88,11 +92,11 @@ class PyLith_JS():
                 
                 count = count + 1       
    
-    def ReadFrictionCoefficient(self, mainDir):
+    def ReadFrictionCoefficient(self):
         
-        OutputNameFig=mainDir+'./Figures/Slip_Weakening_Friction_Coefficient.eps'
+        OutputNameFig=self.mainDir+'./Figures/Slip_Weakening_Friction_Coefficient.eps'
         
-        filename=mainDir+'spatial/friction_function.spatialdb'
+        filename=self.mainDir+'spatial/friction_function.spatialdb'
         tmp=np.genfromtxt(filename, dtype=float,  skip_header=14)
         x=tmp[:,0]/1e3
 
@@ -295,16 +299,21 @@ class PyLith_JS():
         
         #print Nintervals
         self.XtimeNoTrend=np.copy(self.Xtime)
+        self.detrend_polynomial=np.copy(self.Xtime)
         for pos in range(0,self.Xtime.shape[1]):
             
-            y=self.Xtime[1:,pos]-self.Xtime[0,pos]
-            #bpoints=np.linspace(0, y.shape[0], Nintervals,dtype=int)
-            #self.XtimeNoTrend[:,pos]=signal.detrend(y,bp=bpoints)
+            #y=self.Xtime[:,pos]-self.Xtime[0,pos]
+            y=self.Xtime[:,pos]
             
-            z=np.polyfit(np.arange(0,y.shape[0]),y,degree)
-            p=np.poly1d(z)
-            self.XtimeNoTrend[1:,pos]=y-p(np.arange(0,y.shape[0]))
+            self.XtimeNoTrend[:,pos], self.detrend_polynomial[:,pos]=DetrendLinear(y)
             
+            #z=np.polyfit(np.arange(0,y.shape[0]),y,degree)
+            #p=np.poly1d(z)
+            #self.XtimeNoTrend[:,pos]=y-p(np.arange(0,y.shape[0]))
+            
+            #self.detrend_polynomial[:,pos]=p(np.arange(0,y.shape[0])) # If I sum this to the y vector I get the original one ?
+            #print self.detrend_polynomial[:,pos]
+            #print self.detrend_polynomial.shape
                
                         
         '''
@@ -1241,9 +1250,9 @@ class PyLith_JS():
         plt.savefig(OutputNameFig,format='eps',dpi=1000)
         #plt.show()
     
-    def PlotGeometryWithFriction(self, mainDir):
+    def PlotGeometryWithFriction(self):
         
-        OutputNameFig = mainDir + 'Figures/Geometry_with_Friction_Coeff.eps'
+        OutputNameFig = self.mainDir + 'Figures/Geometry_with_Friction_Coeff.eps'
         print self.FaultX.shape
         print self.mu_f_s.shape
         

@@ -24,63 +24,227 @@ def main():
     
     mu_s="0.07"
     mu_s_constant=0.05
-    mu_d=0.05
+    mu_d=0.01
     mu_d_constant=0.05
     exponent="-0.07"
     
-    #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/mu_"+str(mu)+"/sigma_"+str(sigma)+"/" 
-    #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(TimeWindow)+"/dt_"+str(dt)+"/friction_mag_"+str(friction_mag)+"/friction_constant_"+str(friction_constant)+"/exponent_"+str(exponent)+"/" 
-    mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/mu_s_"+str(mu_s)+"/mu_s_constant_"+str(mu_s_constant)+"/mu_d_"+str(mu_d)+"/mu_d_constant_"+str(mu_d_constant)+"/exponent_"+str(exponent)+"/" 
-    dirGPS='/nobackup1/josimar/Projects/SlowEarthquakes/data/GPS/'
-
-    print "Main Dir = " mainDir
+    ### For the Engaging server use this
+    #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/mu_s_"+str(mu_s)+"/mu_s_constant_"+str(mu_s_constant)+"/mu_d_"+str(mu_d)+"/mu_d_constant_"+str(mu_d_constant)+"/exponent_"+str(exponent)+"/" 
+    #dirGPS='/nobackup1/josimar/Projects/SlowEarthquakes/data/GPS/'
     
-    dir=mainDir+'Export/data/'
-    data=Load_and_QC_Model_GPS()
+    ###For the Mac Computer use this
+    mainDir="/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/mu_s_"+str(mu_s)+"/mu_s_constant_"+str(mu_s_constant)+"/mu_d_"+str(mu_d)+"/mu_d_constant_"+str(mu_d_constant)+"/exponent_"+str(exponent)+"/"
+    dirGPS='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/Data/GPS/data/'
 
+    print "Main Dir = " , mainDir
+    
+    
     ##HEre is the time to be loaded
-    TimeBegin, TimeEnd=10.25, 10.35
-
-    ### Load Fault information here
-    data.Load_Fault_Data_Exported_from_H5(mainDir, TimeBegin, TimeEnd)
-      
+    #TimeBegin, TimeEnd=10.25, 10.35
+    TimeBegin, TimeEnd=10.3, 20
     #Load fault geometry information here.
     OutputDir=mainDir+'Figures/'
     
-    #read friction coefficient instead of creating a new one.
-    data.ReadFrictionCoefficient(mainDir)
-    #data.PlotGeometryWithFriction(mainDir)
-    #plt.show()
-
-        
+    #dir=mainDir+'Export/data/'
+    data=Load_and_QC_Model_GPS(mainDir, TimeBegin, TimeEnd)
+    
     InputFileNameHorizontal=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Horizontal.dat"
     InputFileNameVertical=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Vertical.dat"
-
+    
     ##Load Model surface displacemet at GPS stations
-    data.Load_Surface_at_GPS_Locations(InputFileNameHorizontal, InputFileNameVertical, TimeBegin, TimeEnd )
-
+    data.Load_Surface_at_GPS_Locations(InputFileNameHorizontal, InputFileNameVertical)
+    
 
     ########### Here it loads the DATA GPS data Information
     GPSname=["DOAR",  "MEZC", "IGUA"]
     data.nameGPS=GPSname
     data.LoadGPSdata(dirGPS,GPSname)
+    
+    
+    ### Load Fault information here
+    data.Load_Fault_Data_Exported_from_H5()
+      
+    #read friction coefficient instead of creating a new one.
+    data.ReadFrictionCoefficient()
+    data.PlotGeometryWithFriction()
+    
+    ### Get index of the SSE occurrence
+    pos=0
+    data.GetIndexOfSSEOccurrence(mainDir,pos, dt)
+    #data.PlotSSEIntervalOccurence(mainDir,pos)
 
-    i=35
-    x=data.timeGPS[0:i,0]
-    y=data.dispGPS[0:i,0]
+    
 
-    dt=0.025
+    ## I have to make sure I am comparing the same GPS stations here
+    tmp=np.nonzero(data.dispGPS[:,0]);
+    i=tmp[0][-1]    #Get the index of the last non-zero element on the vector
+
+    #Get data here
+    x, y =data.timeGPS[0:i,0], data.dispGPS[0:i,0]
+    
+    dt=0.25
     xinterp=np.arange(x[0],x[-1],dt)
-    yinterp=np.interp(xinterp,x,y)
+    yinterp_data=np.interp(xinterp,x,y)
+    
+    yinterp_data=MathFunctions_JS(yinterp_data)   
+    yinterp_data.DetrendLinear()
+    
+    
+    tst=[]
+    tst.append(MathFunctions_JS(yinterp_data))
+    tst.append(MathFunctions_JS(yinterp_data))
+    
+    print tst[0]
+    return
+
     #print data.dispGPS
+    
+    '''
+    gps=Load_and_QC_Model_GPS(mainDir, TimeBegin, TimeEnd)
+    
+    gps.Xtime=np.zeros([yinterp_data.shape[0],3])
+    gps.Xtime[:,0]=yinterp_data
+    
+    #Detrend Surface Displacement
+    degree=1
+    gps.DetrendSurfaceDisplacement(degree)
+    ''' 
+    
+
+    ''' This class compares a given model waveform against a template waveform, normally given by data. The idea here is to find the relative window of hte model waveform that best match the template wavform.
+    The is applicable when the model waveform is expected to resemble the data waveform at some point in time. 
+        What the class does is to shift the model waveform until the best match is found against the data waveform. 
+        You can given a vector containing many startiing points for hte waveform, which woudl correspond for example to the start of the SSE events time window
+        
+        Requirement: 
+            1) both data and model waveforms have the same sampling rate
+            2) The model waveform is larger than the data template
+        
+        Required input data:
+            1) self.SSEtime => vector containing the starting time of hte SSE events, or the breaking points where the model waveform should start to be compared
+            2) self.Xtime => vector containing the values of the SSE events.
+            3) yinterp_data => vector containing the data template that the model should be matched to
+            4) 
+            
+                '''
+    
+    #This is the value that should  be subtracted from the SSE events
+    SSE_RMS_Final=np.zeros([data.SSEtime.shape[0], 4])
+    
+    for SSEcount in range(0, data.SSEtime.shape[0]):
+        
+        ### Get SSE time value and the corresponding index of the vector
+        tSSE=data.SSEtime[SSEcount,0]
+        diff=np.abs(tSSE-data.year[:,0])
+        k=diff.argmin()
+        
+        ### this gets the first SSE occurrence
+        #k contains the index of the associated SSE event
+        #k=data.SSEind[SSEcount,0]
+        
+        ### Now that I know the SSE event that I am working with, then now I can iterate over the stations and compare it
+        ### with the different GPS displacements
+        
+        #### This first initial loop is over the window where the data and model are.
+        
+        SSEstat=np.zeros([1,4])
+        #plt.figure()
+        for i in range(0,yinterp_data.data.shape[0]):
+            
+            if k-i >= 0 and k-i+yinterp_data.data.shape[0] <= data.Xtime.shape[0]:
+                
+                #Here I shift the SSE event form the model to find a good match with te data
+                ibegin=k-i
+                iend=k-i+yinterp_data.data.shape[0]
+                ymodel=data.Xtime[ibegin:iend,0]
+                
+                ### I have to detrend y model and yinterp_data before I compare them
+                ymodel=MathFunctions_JS(ymodel)
+                ymodel.DetrendLinear()
+                
+                #print i, k, k-i, yinterp_data.shape[0], ymodel.shape, yinterp_data.shape
+                
+                #Removing the dc_value
+                #print ymodel[0]
+                #ymodel=ymodel-ymodel[0]
+                
+                #Measure RMS between data and model - Use the detrended versions of the waveforms
+                RMS = np.sqrt(np.sum((ymodel.data_no_trend -  yinterp_data.data_no_trend)**2))
+                
+                #print "RMS Value = ", RMS
+                
+                #save RMS value, index corresponding to the begining and end of the time windown around the SSE event
+                tmp=np.array([RMS,ibegin,iend,k])
+                SSEstat=np.vstack([SSEstat,tmp])
+                
+                #SSEstat[count,0]=RMS    ## RMS value
+                #SSEstat[count,1]=ibegin ## index corresponding to the beggining of hte SSE event that best fit the data
+                #SSEstat[count,2]=iend   ## index corresponding to the end of the SSE event that best fit the data
+                #SSEstat[count,3]=k      ## ID of the  SSE event to get the fault properties. For example: data.disp1[:,k] 
+            
+                #plt.plot(ymodel.data_no_trend,'-r')
+                #plt.plot(yinterp_data - yinterp_data[0] ,'k', linewidth=3)
+                #plt.grid(True)
+            
+                #plt.show()
+        
+        x=SSEstat[1:,:]
+        SSEstat=np.copy(x)
+       
+        ## Get minimum RMS value for this specific SSE event     
+        minRMS=SSEstat[:,0].argmin()
+        
+        ##Saving the SSE information corresponding to the Minimum RMS value for the window loop
+        SSE_RMS_Final[SSEcount,:]=SSEstat[minRMS,:]
+        
+        
+    
+    print SSE_RMS_Final  
+    
+    plt.figure()
+    for i in range(0,SSE_RMS_Final.shape[0]):
+        ymodel=data.Xtime[ int(SSE_RMS_Final[i,1]) : int(SSE_RMS_Final[i,2]) ,0]
+        ymodel=MathFunctions_JS(ymodel)
+        ymodel.DetrendLinear() 
+        
+        plt.plot(xinterp  , yinterp_data.data_trend_polynomial + ymodel.data_no_trend,'ro')
+        plt.plot(xinterp  , yinterp_data.data_trend_polynomial + yinterp_data.data_no_trend,'-k' , linewidth=3)
+    #plt.ylim([0,1])
+    plt.xlim([2000,2015])
+    plt.grid(True)
+    plt.title('ALL SSE with the best RMS value for the window ')
+    
+    
+    ##### THIS CONTAINS THE MINIMUM RMS VALUE FROM ALLL THE TESTES SSE EVENTS
+    ind=SSE_RMS_Final[:,0].argmin()
+    minRMS_Global=SSE_RMS_Final[ind,:]
+    
+    ymodel=data.Xtime[ int( minRMS_Global[1] ) : int( minRMS_Global[2] ) ,0]
+    ymodel=MathFunctions_JS(ymodel)
+    ymodel.DetrendLinear() 
+    
+    plt.figure()
+    plt.plot(xinterp  , yinterp_data.data_trend_polynomial + ymodel.data_no_trend ,'-r')
+    plt.plot(xinterp  , yinterp_data.data_trend_polynomial + yinterp_data.data_no_trend,'-k' , linewidth=3)
+    plt.title('SSE with the Best RMS value from all the other SSE events')
+    plt.xlim([2000,2015])
+    #plt.ylim([0,1])
+    plt.grid(True)
+    
+    plt.show()
+    
+    
+    return
+    
     print data.timeGPS
 
-    plt.figure(1)
+    plt.figure()
     #plt.plot(data.timeGPS[:,0], data.dispGPS[:,0],'ks')
     plt.plot(x,y,'ks')
     plt.plot(xinterp,yinterp,'-r')
     plt.xlim([2000,2015])
     plt.show()
+    
     return
        
 
@@ -97,9 +261,7 @@ def main():
     #data.PlotPointFaultPointDisplacementRate(mainDir, Loc, startyear, endyear)
     #plt.show()
 
-    pos=0
-    data.GetIndexOfSSEOccurrence(mainDir,pos, dt)
-    #data.PlotSSEIntervalOccurence(mainDir,pos)
+    
 
     
     amp=0.04
