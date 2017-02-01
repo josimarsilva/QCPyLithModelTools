@@ -1296,22 +1296,33 @@ class PyLith_JS(MathFunctions_JS):
         #plt.show()
         
     
-    def PlotFaultSlipDuringSSEAndGeometry(self, mainDir, period_begin, period_end):
+    def PlotFaultSlipDuringSSEAndGeometry(self, mainDir, timeSSE):
         
         OutputNameFig=mainDir + 'Figures/FaultSlipDuringSSE_and_Geometry.eps'
         
         #This contains the indices corresponding to SSE events with a certain period
-        ind=np.where(np.logical_and(self.InterSSEduration > period_begin , self.InterSSEduration <= period_end))
-        test=np.asarray(ind, dtype=int)
-        ind=np.copy(test)
+        #ind=np.where(np.logical_and(self.InterSSEduration > period_begin , self.InterSSEduration <= period_end))
+        #test=np.asarray(ind, dtype=int)
+        #ind=np.copy(test)
+        
+        ###  The IDEA HERE IS TO FIND THE FAULT INDEXES ACCORDING TO THE self.SSETime
+         #tdata=np.array((self.year[:,0]),dtype=float)
+        indexSSEFault=np.zeros([timeSSE.shape[0], 2])
+        
+        for i in range(0,timeSSE.shape[0]):
+            tmp1 = np.abs( timeSSE[i,0] - self.FaultTime)
+            indexSSEFault[i,0]=tmp1.argmin()
+            
+            tmp2 = np.abs( timeSSE[i,1] - self.FaultTime)
+            indexSSEFault[i,1]=tmp2.argmin()
+        
         
         #An SSE event will be given by:
         #self.SSEindexFault[ind[i],0] and self.SSEindexFault[ind[i],1]
         
-        print "Number of SSE events found with the specified periodicity=", self.SSEindexFault[ind[0,:],1].shape[0]
+        print "Number of SSE to be plotted = ", indexSSEFault.shape[0]
         
-        if self.SSEindexFault[ind[0,:],1].shape[0] == 0:
-            return
+        
         
         f,ax=plt.subplots(2,sharex=True)
         f.subplots_adjust(hspace=0.4)
@@ -1338,12 +1349,14 @@ class PyLith_JS(MathFunctions_JS):
         ax[0].tick_params(labelsize=16)
         #plt.gca().invert_yaxis()
             
-        for k in range(0,ind.shape[1]):
+        #for k in range(0,ind.shape[0]):
+        for k in range(0,indexSSEFault.shape[0]):
         #for k in range(0,self.SSEindexFault.shape[0]):
             #print self.disp1.shape, self.FaultX.shape
             
-            #ax[1].plot(self.FaultX/1e3, self.disp1[ :, self.SSEindexFault[ind[0,k],1] ] - self.disp1[ :, self.SSEindexFault[ind[0,k],0] ], linewidth=2 )
-            slip= np.abs(self.disp1[ :, self.SSEindexFault[ind[0,k],1] ]) - np.abs(self.disp1[ :, self.SSEindexFault[ind[0,k],0] ])
+            #slip= np.abs(self.disp1[ :, self.SSEindexFault[ind[k],1] ]) - np.abs(self.disp1[ :, self.SSEindexFault[ind[k],0] ])
+            slip= np.abs(self.disp1[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.disp1[ :, int(indexSSEFault[k,0]) ])
+            #slip= np.abs( self.disp1[ :, indexSSE[k,1] ] - self.disp1[ :, indexSSE[k,0] ] )
             ax[1].plot(self.FaultX/1e3, slip, linewidth=2 )
             
             #plt.gca().invert_yaxis()
@@ -1364,6 +1377,8 @@ class PyLith_JS(MathFunctions_JS):
         print "printing ,",OutputNameFig       
         plt.savefig(OutputNameFig,format='eps',dpi=1000)       
         plt.show()
+        
+        
     
     def PlotMomentMagnitude(self, mainDir, shear_modulus):
         ##################Compute the Moment magnitude.

@@ -193,6 +193,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
 
         ###  The IDEA HERE IS TO FIND THE FAULT INDEXES ACCORDING TO THE self.SSETime
         
+        '''
         #tdata=np.array((self.year[:,0]),dtype=float)
         self.SSEindexFault=np.zeros([self.SSEind.shape[0], 2])
         
@@ -202,7 +203,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
             
             tmp2 = np.abs(self.SSEtime[i,1] - self.FaultTime)
             self.SSEindexFault[i,1]=tmp2.argmin()
-        
+        '''
 
         '''
         plt.figure(1)

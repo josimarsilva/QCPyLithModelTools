@@ -24,15 +24,15 @@ def main():
     Tbegin, Tend, dt = 10000, 20000, 0.25
     
     ##Here is the time data time window for inversion
-    TimeBeginLoadData, TimeEndLoadData=2004, 2012
+    TimeBeginLoadData, TimeEndLoadData=2004, 2011
     
     #Here is the model time window to search for the best model parameters that match the data
-    TimeBeginModel, TimeEndModel=10, 20
+    TimeBeginModel, TimeEndModel=11, 20
     
     dt=0.25
     mu_s="0.07"
-    mu_s_constant=0.05
-    mu_d=0.01
+    mu_s_constant=0.02
+    mu_d=0.05
     mu_d_constant=0.05
     exponent="-0.07"
     
@@ -99,45 +99,28 @@ def main():
     model.GetIndexOfSSEOccurrence(mainDir,pos, dt)
     #data.PlotSSEIntervalOccurence(mainDir,pos)
 
-
-    ## I have to make sure I am comparing the same GPS stations here
-    
-    station_name='IGUA'
-    #data.Interp_JS(dt, station_name)
-    #data.data_no_trend, data.data_trend_polynomial=DetrendLinear(data.yinterp)
-    
-    count=0
+        
+    #### Here computes and plot the fit between data and model for the best SSE 
     station_List=['DOAR', 'MEZC', 'IGUA']
-    SSE_RMS_Final=np.zeros([1,4])
-    SSE_RMS=np.zeros([model.SSEind.shape[0],4,len(station_List)])
-    
-    for station_name in station_List:
-        minRMS_Global, SSE_RMS[:,:,count] = Compare_Data_and_Model_Displacements(model, data, station_name)
-        SSE_RMS_Final=np.vstack([SSE_RMS_Final,SSE_RMS[:,:,count]])
-        count=count+1
-    
-    ################ In the next steps I try to find the glabl mininium between all RMS values
-    ### and ALLL SEE events
-    SSEindList=SSE_RMS_Final[:,-1]
-    SSEindList=np.unique(SSEindList)
-    x=SSEindList[1:]
-    SSEindList=x
-    SSEindList=np.sort(SSEindList)  ## This contains the unique set of SSE ind from all stations
-    
-    minRMS_Global=np.zeros([SSEindList.shape[0],2])
-    for i in range(0,SSEindList.shape[0]):
-        tmp=np.where( SSEindList[i] == SSE_RMS_Final[:,3])
-        RMS=np.sum(SSE_RMS_Final[tmp,0])    #Get the sum of the RMS value from all stations
-        #start_ind=np.amin(SSE_RMS_Final[tmp,1])  #Get the minimum index from all SSE to start the window
-        #end_ind=np.amax(SSE_RMS_Final[tmp,2])    #Get the maximum index to end the window
-        minRMS_Global[i,:] =[RMS, SSEindList[i]] ## keep the index of the SSE event
-    
-    
-    SSE_RMS_Final=np.copy(minRMS_Global) 
-    ind=SSE_RMS_Final[:,0].argmin()
-    minRMS_Global=SSE_RMS_Final[ind,:]
+    minRMS_Global, SSE_RMS, SSE_RMS_Final = Find_Best_Fit_Between_Model_and_Data(model, data, station_List)
+    Plot_Comparison_SSE_Best_Fit_to_Data(model, data, station_List, SSE_RMS_Final, SSE_RMS, minRMS_Global)
     
         
+    ### Here the goal is to plot the fault displacement corresponding to the SSE with minimum misfit
+    ## Here I can have the option to simply plot all the SSE events fault slip
+    #timeSSE=model.SSEtime
+    
+    ### Here I get the time of hte SSE event that fits the data best, globally, for all GPS stations
+    tmp=np.where( model.SSEind[:,0] == minRMS_Global[1] )
+    timeSSE=np.array( [model.SSEtime[tmp,0], model.SSEtime[tmp,1]] ).reshape([1,2])
+    
+    model.PlotFaultSlipDuringSSEAndGeometry(mainDir, timeSSE)
+    plt.show()
+    
+    
+    
+    
+    return
     for station_name in station_List:
             
         model_sta_id = Get_Station_ID(model.nameGPS, station_name)
@@ -155,7 +138,6 @@ def main():
             indEnd= int(SSE_RMS[tmp,2,model_sta_id])
             
             ymodel=model.Xtime[ indBegin : indEnd , model_sta_id]
-            
             ymodel_no_trend, ymodel_data_polynomial=DetrendLinear(ymodel) 
         
             #xmodel = np.arange(data.timeGPS[0,data_sta_id],np.amax( data.timeGPS[:,:] ),data.dt)
@@ -163,6 +145,7 @@ def main():
             
             plt.figure(10)
             plt.plot(data.xinterp , data.data_trend_polynomial + ymodel_no_trend,'-r')
+            #plt.plot(timefinal , ymodel_trend_polynomial + ymodel_no_trend,'-r')
             #plt.plot(data.xinterp  , data.data_trend_polynomial + data.data_no_trend,'ko' , linewidth=3)
             plt.plot(data.timeGPSAll  , data.dispGPSAll,'ko' , linewidth=3)
         #plt.ylim([0,1])
@@ -265,22 +248,7 @@ def main():
     ''' 
     
 
-    ''' This class compares a given model waveform against a template waveform, normally given by data. The idea here is to find the relative window of hte model waveform that best match the template wavform.
-    The is applicable when the model waveform is expected to resemble the data waveform at some point in time. 
-        What the class does is to shift the model waveform until the best match is found against the data waveform. 
-        You can given a vector containing many startiing points for hte waveform, which woudl correspond for example to the start of the SSE events time window
-        
-        Requirement: 
-            1) both data and model waveforms have the same sampling rate
-            2) The model waveform is larger than the data template
-        
-        Required input data:
-            1) self.SSEtime => vector containing the starting time of hte SSE events, or the breaking points where the model waveform should start to be compared
-            2) self.Xtime => vector containing the values of the SSE events.
-            3) yinterp_data => vector containing the data template that the model should be matched to
-            4) 
-            
-                '''
+    
     
     #This is the value that should  be subtracted from the SSE events
     SSE_RMS_Final=np.zeros([data.SSEtime.shape[0], 4])
@@ -617,5 +585,59 @@ def main():
     #subprocess.call(['./MakeMovie.sh'])
     
     #plt.show()
+    
+    ##########
+    aux=12
+    timeaux1=np.arange(data.xinterp[0] - data.dt*aux, data.xinterp[0], data.dt )
+    timeaux=data.xinterp
+    timeaux3=np.arange(data.xinterp[-1], data.xinterp[-1] + data.dt*aux, data.dt )
+
+    ymodel1=model.Xtime[ indBegin - aux : indBegin , model_sta_id]
+    ymodel3=model.Xtime[ indEnd : indEnd + aux , model_sta_id]
+
+    timefinal=np.hstack([timeaux1, timeaux, timeaux3])
+    ymodelfinal=np.hstack([ymodel1, ymodel, ymodel3])
+    ymodel_no_trend, tmp =DetrendLinear(ymodelfinal) 
+    
+    
+    ### Now fit a strainght line otthe data trend to correct the model
+    z=np.polyfit(np.arange(0,data.data_trend_polynomial.shape[0]), data.data_trend_polynomial,1)
+    p=np.poly1d(z)         
+    ymodel_trend_polynomial=p(np.arange(0,ymodelfinal.shape[0])) 
+    print timefinal.shape, ymodelfinal.shape, ymodel_trend_polynomial.shape
+    #return
+    #################
+    
+    '''
+    count=0
+    station_List=['DOAR', 'MEZC', 'IGUA']
+    SSE_RMS_Final=np.zeros([1,4])
+    SSE_RMS=np.zeros([model.SSEind.shape[0],4,len(station_List)])
+    
+    for station_name in station_List:
+        minRMS_Global, SSE_RMS[:,:,count] = Compare_Data_and_Model_Displacements(model, data, station_name)
+        SSE_RMS_Final=np.vstack([SSE_RMS_Final,SSE_RMS[:,:,count]])
+        count=count+1
+    
+    
+    ################ In the next steps I try to find the glabl mininium between all RMS values
+    ### and ALLL SEE events
+    SSEindList=SSE_RMS_Final[:,-1]
+    SSEindList=np.unique(SSEindList)
+    x=SSEindList[1:]
+    SSEindList=x
+    SSEindList=np.sort(SSEindList)  ## This contains the unique set of SSE ind from all stations
+    
+    minRMS_Global=np.zeros([SSEindList.shape[0],2])
+    for i in range(0,SSEindList.shape[0]):
+        tmp=np.where( SSEindList[i] == SSE_RMS_Final[:,3])
+        RMS=np.sum(SSE_RMS_Final[tmp,0])    #Get the sum of the RMS value from all stations
+        minRMS_Global[i,:] =[RMS, SSEindList[i]] ## keep the index of the SSE event
+    
+    
+    SSE_RMS_Final=np.copy(minRMS_Global) 
+    ind=SSE_RMS_Final[:,0].argmin()
+    minRMS_Global=SSE_RMS_Final[ind,:]
+    '''
 
 main()

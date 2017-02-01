@@ -29,3 +29,4 @@ class MathFunctions_JS():
         self.xinterp = np.arange(x[0],x[-1],dt)
         self.yinterp = np.interp(self.xinterp,x,y)
         #return y_no_trend % y_polynomial
+        
