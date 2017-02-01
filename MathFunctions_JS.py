@@ -6,23 +6,26 @@ import os.path
 import math
 import matplotlib.pyplot as plt
 from scipy import signal
+from Functions_JS import * 
 
 
 class MathFunctions_JS():
     
-    def __init__(self,data):
-        self.data=data
+    #def __init__(self,data):
+    #    self.data=data
     #    print "nothing"
     
-    def DetrendLinear(self, degree=1):
-        ''' This class detrends a certain curve y using a linear function '''
+    
+    def Interp_JS(self, dt, station_name):
         
-        #degree = 1 
-        z=np.polyfit(np.arange(0,self.data.shape[0]), self.data, degree)
-        p=np.poly1d(z)
-        self.data_no_trend=self.data-p(np.arange(0,self.data.shape[0]))
-            
-        self.data_trend_polynomial=p(np.arange(0,self.data.shape[0])) # If I sum this to the y vector I get the original one ?
+        sta_id=Get_Station_ID(self.nameGPS, station_name)
         
-          
+        tmp=np.nonzero(self.dispGPS[:,sta_id]);
+        i=tmp[0][-1]    #Get the index of the last non-zero element on the vector
+    
+        #Get data here
+        x, y = self.timeGPS[0:i,sta_id], self.dispGPS[0:i,sta_id]
+        
+        self.xinterp = np.arange(x[0],x[-1],dt)
+        self.yinterp = np.interp(self.xinterp,x,y)
         #return y_no_trend % y_polynomial

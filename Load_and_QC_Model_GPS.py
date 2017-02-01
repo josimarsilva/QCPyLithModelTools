@@ -39,6 +39,11 @@ class Load_and_QC_Model_GPS(PyLith_JS):
     
     def Load_Surface_at_GPS_Locations(self,InputFileNameHorizontal, InputFileNameVertical ):
         
+        #Get Header information here
+        infile=open(InputFileNameHorizontal)
+        tmp=infile.readline().split()
+        self.nameGPS=tmp[1:]
+                
         #print "Loading ...", InputFileName
         tmpH=np.loadtxt(InputFileNameHorizontal,dtype=float, skiprows=1)
         tmpZ=np.loadtxt(InputFileNameVertical,dtype=float, skiprows=1)

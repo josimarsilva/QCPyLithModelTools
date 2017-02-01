@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from PyLith_JS import *
 from Load_and_QC_Model_GPS import *
+from Functions_JS import *
 from scipy import signal
 from matplotlib import rc
 
@@ -22,11 +23,25 @@ def main():
     #TimeWindow=100000
     Tbegin, Tend, dt = 10000, 20000, 0.25
     
+    ##Here is the time data time window for inversion
+    TimeBeginLoadData, TimeEndLoadData=2004, 2012
+    
+    #Here is the model time window to search for the best model parameters that match the data
+    TimeBeginModel, TimeEndModel=10, 20
+    
+    dt=0.25
     mu_s="0.07"
     mu_s_constant=0.05
     mu_d=0.01
     mu_d_constant=0.05
     exponent="-0.07"
+    
+    ## Good example here
+    #mu_s="0.07"
+    #mu_s_constant=0.05
+    #mu_d=0.01
+    #mu_d_constant=0.05
+    #exponent="-0.07"
     
     ### For the Engaging server use this
     #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/mu_s_"+str(mu_s)+"/mu_s_constant_"+str(mu_s_constant)+"/mu_d_"+str(mu_d)+"/mu_d_constant_"+str(mu_d_constant)+"/exponent_"+str(exponent)+"/" 
@@ -41,60 +56,199 @@ def main():
     
     ##HEre is the time to be loaded
     #TimeBegin, TimeEnd=10.25, 10.35
-    TimeBegin, TimeEnd=10.3, 20
+    #TimeBegin, TimeEnd=10.3, 20
     #Load fault geometry information here.
     OutputDir=mainDir+'Figures/'
     
     #dir=mainDir+'Export/data/'
-    data=Load_and_QC_Model_GPS(mainDir, TimeBegin, TimeEnd)
+    model=Load_and_QC_Model_GPS(mainDir, TimeBeginModel, TimeEndModel)
+    data=Load_and_QC_Model_GPS(mainDir, TimeBeginLoadData, TimeEndLoadData)
     
     InputFileNameHorizontal=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Horizontal.dat"
     InputFileNameVertical=mainDir+"Export/data/Export_SurfaceDisp_at_GPSLocations_Vertical.dat"
     
+    
+
     ##Load Model surface displacemet at GPS stations
-    data.Load_Surface_at_GPS_Locations(InputFileNameHorizontal, InputFileNameVertical)
+    model.Load_Surface_at_GPS_Locations(InputFileNameHorizontal, InputFileNameVertical)
     
 
     ########### Here it loads the DATA GPS data Information
     GPSname=["DOAR",  "MEZC", "IGUA"]
-    data.nameGPS=GPSname
     data.LoadGPSdata(dirGPS,GPSname)
+    data.dt=dt
     
+    '''
+    plt.figure()
+    plt.plot(data.timeGPS, data.dispGPS,'ks')
+    #plt.plot(data.timeGPSAll, data.dispGPSAll,'ro')
+    plt.xlim([2000,2016])
+    plt.show()
+    return
+    '''
     
     ### Load Fault information here
-    data.Load_Fault_Data_Exported_from_H5()
+    model.Load_Fault_Data_Exported_from_H5()
       
     #read friction coefficient instead of creating a new one.
-    data.ReadFrictionCoefficient()
-    data.PlotGeometryWithFriction()
+    model.ReadFrictionCoefficient()
+    #model.PlotGeometryWithFriction()
     
     ### Get index of the SSE occurrence
     pos=0
-    data.GetIndexOfSSEOccurrence(mainDir,pos, dt)
+    model.GetIndexOfSSEOccurrence(mainDir,pos, dt)
     #data.PlotSSEIntervalOccurence(mainDir,pos)
 
-    
 
     ## I have to make sure I am comparing the same GPS stations here
-    tmp=np.nonzero(data.dispGPS[:,0]);
-    i=tmp[0][-1]    #Get the index of the last non-zero element on the vector
-
-    #Get data here
-    x, y =data.timeGPS[0:i,0], data.dispGPS[0:i,0]
     
-    dt=0.25
-    xinterp=np.arange(x[0],x[-1],dt)
-    yinterp_data=np.interp(xinterp,x,y)
+    station_name='IGUA'
+    #data.Interp_JS(dt, station_name)
+    #data.data_no_trend, data.data_trend_polynomial=DetrendLinear(data.yinterp)
     
-    yinterp_data=MathFunctions_JS(yinterp_data)   
-    yinterp_data.DetrendLinear()
+    count=0
+    station_List=['DOAR', 'MEZC', 'IGUA']
+    SSE_RMS_Final=np.zeros([1,4])
+    SSE_RMS=np.zeros([model.SSEind.shape[0],4,len(station_List)])
+    
+    for station_name in station_List:
+        minRMS_Global, SSE_RMS[:,:,count] = Compare_Data_and_Model_Displacements(model, data, station_name)
+        SSE_RMS_Final=np.vstack([SSE_RMS_Final,SSE_RMS[:,:,count]])
+        count=count+1
+    
+    ################ In the next steps I try to find the glabl mininium between all RMS values
+    ### and ALLL SEE events
+    SSEindList=SSE_RMS_Final[:,-1]
+    SSEindList=np.unique(SSEindList)
+    x=SSEindList[1:]
+    SSEindList=x
+    SSEindList=np.sort(SSEindList)  ## This contains the unique set of SSE ind from all stations
+    
+    minRMS_Global=np.zeros([SSEindList.shape[0],2])
+    for i in range(0,SSEindList.shape[0]):
+        tmp=np.where( SSEindList[i] == SSE_RMS_Final[:,3])
+        RMS=np.sum(SSE_RMS_Final[tmp,0])    #Get the sum of the RMS value from all stations
+        #start_ind=np.amin(SSE_RMS_Final[tmp,1])  #Get the minimum index from all SSE to start the window
+        #end_ind=np.amax(SSE_RMS_Final[tmp,2])    #Get the maximum index to end the window
+        minRMS_Global[i,:] =[RMS, SSEindList[i]] ## keep the index of the SSE event
     
     
-    tst=[]
-    tst.append(MathFunctions_JS(yinterp_data))
-    tst.append(MathFunctions_JS(yinterp_data))
+    SSE_RMS_Final=np.copy(minRMS_Global) 
+    ind=SSE_RMS_Final[:,0].argmin()
+    minRMS_Global=SSE_RMS_Final[ind,:]
     
-    print tst[0]
+        
+    for station_name in station_List:
+            
+        model_sta_id = Get_Station_ID(model.nameGPS, station_name)
+        data_sta_id = Get_Station_ID(data.nameGPS, station_name)
+        
+        data.Interp_JS(data.dt, station_name)
+        data.data_no_trend, data.data_trend_polynomial=DetrendLinear(data.yinterp)
+        
+        ### Loop over all SSE events in the list
+        for i in range(0,SSE_RMS_Final.shape[0]):
+            
+            ## Her I have to ge the correspokding start and stop indexes for this stations,
+            tmp=np.where( SSE_RMS_Final[i,1] == SSE_RMS[:,3,model_sta_id] )
+            indBegin= int(SSE_RMS[tmp,1,model_sta_id])
+            indEnd= int(SSE_RMS[tmp,2,model_sta_id])
+            
+            ymodel=model.Xtime[ indBegin : indEnd , model_sta_id]
+            
+            ymodel_no_trend, ymodel_data_polynomial=DetrendLinear(ymodel) 
+        
+            #xmodel = np.arange(data.timeGPS[0,data_sta_id],np.amax( data.timeGPS[:,:] ),data.dt)
+            #print ymodel_no_trend.shape, data.xinterp.shape
+            
+            plt.figure(10)
+            plt.plot(data.xinterp , data.data_trend_polynomial + ymodel_no_trend,'-r')
+            #plt.plot(data.xinterp  , data.data_trend_polynomial + data.data_no_trend,'ko' , linewidth=3)
+            plt.plot(data.timeGPSAll  , data.dispGPSAll,'ko' , linewidth=3)
+        #plt.ylim([0,1])
+        plt.xlim([2000,2015])
+        plt.ylim([0,0.45])
+        plt.xlabel('Time [years]', fontsize=17)
+        plt.ylabel('X displacement [m]', fontsize=17)
+        plt.grid(True)
+        plt.title('All SSE  ')
+        
+        
+        tmp=np.where( minRMS_Global[1] == SSE_RMS[:,3,model_sta_id] )
+        indBegin= int(SSE_RMS[tmp,1,model_sta_id])
+        indEnd= int(SSE_RMS[tmp,2,model_sta_id])
+            
+        ymodel=model.Xtime[ indBegin : indEnd , model_sta_id]
+        #ymodel=MathFunctions_JS(ymodel)
+        ymodel_no_trend, ymodel_data_polynomial=DetrendLinear(ymodel) 
+        
+        #ymodel=model.Xtime[ int( minRMS_Global[1] ) : int( minRMS_Global[2] ) ,model_sta_id]
+        #ymodel_no_trend, ymodel_data_polynomial=DetrendLinear(ymodel) 
+        
+        plt.figure(11)
+        plt.plot(data.xinterp  , data.data_trend_polynomial + ymodel_no_trend ,'-r', linewidth=3)
+        #plt.plot(data.xinterp  , data.data_trend_polynomial + data.data_no_trend,'ko' , linewidth=3)
+        plt.plot(data.timeGPSAll  , data.dispGPSAll,'ko' , linewidth=3)
+        plt.title('SSE with the minimum RMS value ')
+        plt.xlim([2000,2015])
+        plt.ylim([0,0.45])
+        plt.xlabel('Time [years]', fontsize=17)
+        plt.ylabel('X displacement [m]', fontsize=17)
+        #plt.ylim([0,1])
+        plt.grid(True)
+        
+        
+    plt.show()
+    
+    
+    
+    return
+    
+    station_List=['DOAR', 'MEZC', 'IGUA']
+    for station_name in station_List:
+        minRMS_Global, SSE_RMS_Final = Compare_Data_and_Model_Displacements(model, data, station_name)
+    
+        print minRMS_Global
+        
+        model_sta_id = Get_Station_ID(model.nameGPS, station_name)
+        
+        for i in range(0,SSE_RMS_Final.shape[0]):
+            ymodel=model.Xtime[ int(SSE_RMS_Final[i,1]) : int(SSE_RMS_Final[i,2]) ,model_sta_id]
+            #ymodel=MathFunctions_JS(ymodel)
+            ymodel_no_trend, ymodel_data_polynomial=DetrendLinear(ymodel) 
+            
+            plt.figure(10)
+            plt.plot(data.xinterp  , data.data_trend_polynomial + ymodel_no_trend,'-r')
+            plt.plot(data.xinterp  , data.data_trend_polynomial + data.data_no_trend,'ko' , linewidth=3)
+        #plt.ylim([0,1])
+        plt.xlim([2000,2015])
+        plt.ylim([0,0.45])
+        plt.xlabel('Time [years]', fontsize=17)
+        plt.ylabel('X displacement [m]', fontsize=17)
+        plt.grid(True)
+        plt.title('All SSE  ')
+        
+        
+        
+        ymodel=model.Xtime[ int( minRMS_Global[1] ) : int( minRMS_Global[2] ) ,model_sta_id]
+        ymodel_no_trend, ymodel_data_polynomial=DetrendLinear(ymodel) 
+        
+        plt.figure(11)
+        plt.plot(data.xinterp  , data.data_trend_polynomial + ymodel_no_trend ,'-r', linewidth=3)
+        plt.plot(data.xinterp  , data.data_trend_polynomial + data.data_no_trend,'ko' , linewidth=3)
+        plt.title('SSE with the minimum RMS value ')
+        plt.xlim([2000,2015])
+        plt.ylim([0,0.45])
+        plt.xlabel('Time [years]', fontsize=17)
+        plt.ylabel('X displacement [m]', fontsize=17)
+        #plt.ylim([0,1])
+        plt.grid(True)
+    
+    plt.show()
+    
+    
+    
+    
     return
 
     #print data.dispGPS

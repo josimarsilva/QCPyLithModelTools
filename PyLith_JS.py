@@ -25,6 +25,9 @@ class PyLith_JS(MathFunctions_JS):
         #self.intercept=GPSintercept
         self.dispGPS=np.zeros([100,len(basename)])
         self.timeGPS=np.copy(self.dispGPS)
+        self.timeGPSAll=np.copy(self.dispGPS)
+        self.dispGPSAll=np.copy(self.dispGPS)
+        self.nameGPS=basename
         
         for i in range(0,len(basename)):
             
@@ -32,8 +35,19 @@ class PyLith_JS(MathFunctions_JS):
             fileName=dirName+filename
             my_data=genfromtxt(fileName)
             
-            self.dispGPS[0:my_data.shape[0],i]=my_data[:,1]
-            self.timeGPS[0:my_data.shape[0],i]=my_data[:,0]
+            self.dispGPSAll[0:my_data.shape[0],i]=my_data[:,1]
+            self.timeGPSAll[0:my_data.shape[0],i]=my_data[:,0]
+        
+        
+        for k in range(0, self.timeGPSAll.shape[1]):
+            count=0
+            for i in range(0,self.timeGPSAll.shape[0]):
+                if self.timeGPSAll[i,k] >= self.TimeBegin and self.timeGPSAll[i,k] <= self.TimeEnd:
+                    self.dispGPS[count,k]=self.dispGPSAll[i,k]
+                    self.timeGPS[count,k]=self.timeGPSAll[i,k]
+                    count=count+1
+                
+        
         #self.Xcoord=Xcoord
         #self.Y=my_data[1:,7]
 
@@ -305,11 +319,11 @@ class PyLith_JS(MathFunctions_JS):
             #y=self.Xtime[:,pos]-self.Xtime[0,pos]
             y=self.Xtime[:,pos]
             
-            self.XtimeNoTrend[:,pos], self.detrend_polynomial[:,pos]=DetrendLinear(y)
+            #self.XtimeNoTrend[:,pos], self.detrend_polynomial[:,pos]=DetrendLinear(y)
             
-            #z=np.polyfit(np.arange(0,y.shape[0]),y,degree)
-            #p=np.poly1d(z)
-            #self.XtimeNoTrend[:,pos]=y-p(np.arange(0,y.shape[0]))
+            z=np.polyfit(np.arange(0,y.shape[0]),y,degree)
+            p=np.poly1d(z)
+            self.XtimeNoTrend[:,pos]=y-p(np.arange(0,y.shape[0]))
             
             #self.detrend_polynomial[:,pos]=p(np.arange(0,y.shape[0])) # If I sum this to the y vector I get the original one ?
             #print self.detrend_polynomial[:,pos]
