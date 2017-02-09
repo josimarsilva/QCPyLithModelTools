@@ -1,11 +1,8 @@
-import csv
 import numpy as np
 from numpy import genfromtxt
 import sys
 import os.path
-import math
 import matplotlib.pyplot as plt
-from scipy import signal
 from Functions_JS import * 
 
 
@@ -26,6 +23,7 @@ class MathFunctions_JS():
         #Get data here
         x, y = self.timeGPS[0:i,sta_id], self.dispGPS[0:i,sta_id]
         
+        #print x.shape, y.shape
         self.xinterp = np.arange(x[0],x[-1],dt)
         self.yinterp = np.interp(self.xinterp,x,y)
         #return y_no_trend % y_polynomial

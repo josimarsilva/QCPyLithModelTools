@@ -1,11 +1,7 @@
-import csv
 import numpy as np
-from numpy import genfromtxt
 import sys
 import os.path
-import math
 import matplotlib.pyplot as plt
-from scipy import signal
 from PyLith_JS import *
 from MathFunctions_JS import *
 
@@ -13,9 +9,10 @@ from MathFunctions_JS import *
 class PyLith_JS(MathFunctions_JS):
      
     #def __init__(self,dirName,basename,number):
-    def __init__(self, mainDir, TimeBegin, TimeEnd):
+    def __init__(self, mainDir, direction, TimeBegin, TimeEnd):
 
         self.mainDir=mainDir
+        self.component=direction
         self.TimeBegin=TimeBegin
         self.TimeEnd=TimeEnd
     
@@ -23,7 +20,7 @@ class PyLith_JS(MathFunctions_JS):
     def LoadGPSdata(self,dirName,basename):
         
         #self.intercept=GPSintercept
-        self.dispGPS=np.zeros([100,len(basename)])
+        self.dispGPS=np.zeros([800,len(basename)])
         self.timeGPS=np.copy(self.dispGPS)
         self.timeGPSAll=np.copy(self.dispGPS)
         self.dispGPSAll=np.copy(self.dispGPS)
@@ -303,6 +300,14 @@ class PyLith_JS(MathFunctions_JS):
         
         tdata=np.array((self.year[:,0]),dtype=float)
         tmp = np.abs(timeSearch - tdata)
+        self.indextime=tmp.argmin()
+        
+        
+    def FindIndexTimeFault(self,timeSearch):
+        #Xcoord=-10 #X coordinate in km to plot result.
+        
+        
+        tmp = np.abs(timeSearch - self.FaultTime)
         self.indextime=tmp.argmin()
         
     
@@ -1376,34 +1381,256 @@ class PyLith_JS(MathFunctions_JS):
             
         print "printing ,",OutputNameFig       
         plt.savefig(OutputNameFig,format='eps',dpi=1000)       
-        plt.show()
+        #plt.show()
         
         
+    def PlotFaultSlipAndTractionDuringSSEAndGeometry(self, mainDir, timeSSE):
+        
+        OutputNameFig=mainDir + 'Figures/Fault_Slip_And_Traction_DuringSSE_and_Geometry.eps'
+        
+        #This contains the indices corresponding to SSE events with a certain period
+        #ind=np.where(np.logical_and(self.InterSSEduration > period_begin , self.InterSSEduration <= period_end))
+        #test=np.asarray(ind, dtype=int)
+        #ind=np.copy(test)
+        
+        ###  The IDEA HERE IS TO FIND THE FAULT INDEXES ACCORDING TO THE self.SSETime
+         #tdata=np.array((self.year[:,0]),dtype=float)
+        indexSSEFault=np.zeros([timeSSE.shape[0], 2])
+        
+        for i in range(0,timeSSE.shape[0]):
+            tmp1 = np.abs( timeSSE[i,0] - self.FaultTime)
+            indexSSEFault[i,0]=tmp1.argmin()
+            
+            tmp2 = np.abs( timeSSE[i,1] - self.FaultTime)
+            indexSSEFault[i,1]=tmp2.argmin()
+        
+        
+        #An SSE event will be given by:
+        #self.SSEindexFault[ind[i],0] and self.SSEindexFault[ind[i],1]
+        
+        print "Number of SSE to be plotted = ", indexSSEFault.shape[0]
+        
+        
+        
+        f,ax=plt.subplots(2,sharex=True)
+        f.subplots_adjust(hspace=0.4)
+        
+            
+        ax[0].plot(self.FaultX/1e3, self.FaultY/1e3,'k', linewidth=3)
+        ax[0].plot(self.FaultX/1e3, self.FaultY/1e3-8,'--k', linewidth=1.5)
+        ax[0].set_ylim([0,-80])
+        ax[0].invert_yaxis()
+        #ax[0].xlim([self.FaultX[0]/1e3, self.FaultX[-1]/1e3])
+        plt.gca().invert_yaxis()
+        #ax[0].set_xlabel('X [km]',fontsize=22)
+        ax[0].set_ylabel('Z [km]',fontsize=22)
+        #plt.legend(loc='upper right',fontsize=22)
+        ax[0].grid(True)
+        ax[0].tick_params(labelsize=16)
+        ax[0] = ax[0].twinx()
+        lns2 = ax[0].plot(self.FaultX/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
+        lns3 = ax[0].plot(self.FaultX/1e3, self.mu_f_d[:],'-r',linewidth=2,label='$\mu_d$')
+        ax[0].set_ylabel('friction coefficient',fontsize=22)
+        lns = lns2+lns3
+        labs = [l.get_label() for l in lns]
+        ax[0].legend(lns, labs, loc='upper right', fontsize=16)
+        ax[0].tick_params(labelsize=16)
+        #plt.gca().invert_yaxis()
+            
+        #for k in range(0,ind.shape[0]):
+        for k in range(0,indexSSEFault.shape[0]):
+        #for k in range(0,self.SSEindexFault.shape[0]):
+            #print self.disp1.shape, self.FaultX.shape
+            ax[1].invert_yaxis()
+            #shear_stress=(self.FaultTraction1[:,i]) 
+            stress_drop= np.abs(self.FaultTraction1[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.FaultTraction1[ :, int(indexSSEFault[k,0]) ])
+            #slip= np.abs(self.disp1[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.disp1[ :, int(indexSSEFault[k,0]) ])
+            
+            slipH= np.abs(np.abs(self.disp1[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.disp1[ :, int(indexSSEFault[k,0]) ]))
+            slipV= np.abs(np.abs(self.disp2[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.disp2[ :, int(indexSSEFault[k,0]) ]))
+            #slip=slipH + slipV
+            #slip  = (slipH**2.0 + slipV**2.0)**0.5
+            slip  = slipH
+            
+            lns4=ax[1].plot(self.FaultX/1e3, slip, '-k', linewidth=2 ,  label='fault slip')
+            ax[1].set_xlabel('X position along fault [km]', fontsize=18)
+            ax[1].set_ylabel('Fault slip  [m]', fontsize=18)
+            ax[1].grid(True)
+            ax[1].tick_params(labelsize=16)
+            ax[1].set_ylim([0,0.20])
+            ax[1] = ax[1].twinx()
+            lns5=ax[1].plot(self.FaultX/1e3, stress_drop, '-r', linewidth=2 , label='shear stress drop')
+            
+            #plt.gca().invert_yaxis()
+            ax[1].invert_yaxis()
+            ax[1].set_ylabel('Stress drop  [MPa]', fontsize=18)
+            
+            ax[1].set_title('Fault slip and stress drop during SSE events ', fontsize=18)
+            #ax[1].grid(True)
+            ax[1].tick_params(labelsize=16)
+            ax[1].set_ylim([-1,1])
+            
+            lns = lns4+lns5
+            labs = [l.get_label() for l in lns]
+            ax[1].legend(lns, labs, loc='upper right', fontsize=16)
+        
+        #ax[1].invert_yaxis()
+        #ax[1].set_ylim([0,0.2])
+            #plt.gca().invert_yaxis()
+            
+            
+        print "printing ,",OutputNameFig       
+        plt.savefig(OutputNameFig,format='eps',dpi=1000)       
+        #plt.show()  
     
-    def PlotMomentMagnitude(self, mainDir, shear_modulus):
+    def PlotFaultSlipAnd_CFF_DuringSSEAndGeometry(self, mainDir, timeSSE):
+        
+        OutputNameFig=mainDir + 'Figures/Fault_Slip_And_CFF_DuringSSE_and_Geometry.eps'
+        
+        #This contains the indices corresponding to SSE events with a certain period
+        #ind=np.where(np.logical_and(self.InterSSEduration > period_begin , self.InterSSEduration <= period_end))
+        #test=np.asarray(ind, dtype=int)
+        #ind=np.copy(test)
+        
+        ###  The IDEA HERE IS TO FIND THE FAULT INDEXES ACCORDING TO THE self.SSETime
+         #tdata=np.array((self.year[:,0]),dtype=float)
+        indexSSEFault=np.zeros([timeSSE.shape[0], 2])
+        
+        for i in range(0,timeSSE.shape[0]):
+            tmp1 = np.abs( timeSSE[i,0] - self.FaultTime)
+            indexSSEFault[i,0]=tmp1.argmin()
+            
+            tmp2 = np.abs( timeSSE[i,1] - self.FaultTime)
+            indexSSEFault[i,1]=tmp2.argmin()
+        
+        
+        #An SSE event will be given by:
+        #self.SSEindexFault[ind[i],0] and self.SSEindexFault[ind[i],1]
+        
+        #print "Number of SSE to be plotted = ", indexSSEFault.shape[0]
+        
+        
+        
+        f,ax=plt.subplots(2,sharex=True)
+        f.subplots_adjust(hspace=0.4)
+        
+            
+        ax[0].plot(self.FaultX/1e3, self.FaultY/1e3,'k', linewidth=3)
+        ax[0].plot(self.FaultX/1e3, self.FaultY/1e3-8,'--k', linewidth=1.5)
+        ax[0].set_ylim([0,-80])
+        ax[0].invert_yaxis()
+        #ax[0].xlim([self.FaultX[0]/1e3, self.FaultX[-1]/1e3])
+        plt.gca().invert_yaxis()
+        #ax[0].set_xlabel('X [km]',fontsize=22)
+        ax[0].set_ylabel('Z [km]',fontsize=17)
+        #plt.legend(loc='upper right',fontsize=22)
+        ax[0].grid(True)
+        ax[0].tick_params(labelsize=16)
+        ax[0] = ax[0].twinx()
+        lns2 = ax[0].plot(self.FaultX/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
+        lns3 = ax[0].plot(self.FaultX/1e3, self.mu_f_d[:],'-r',linewidth=2,label='$\mu_d$')
+        ax[0].set_ylabel('friction coefficient',fontsize=17)
+        ax[0].set_ylim([0,0.15])
+        lns = lns2+lns3
+        labs = [l.get_label() for l in lns]
+        ax[0].legend(lns, labs, loc='upper right', fontsize=17)
+        ax[0].tick_params(labelsize=16)
+        #plt.gca().invert_yaxis()
+            
+        #for k in range(0,ind.shape[0]):
+        for k in range(0,indexSSEFault.shape[0]):
+        #for k in range(0,self.SSEindexFault.shape[0]):
+            #print self.disp1.shape, self.FaultX.shape
+            ax[1].invert_yaxis()
+            #shear_stress=(self.FaultTraction1[:,i]) 
+            #stress_drop= np.abs(self.FaultTraction1[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.FaultTraction1[ :, int(indexSSEFault[k,0]) ])
+            shear_stress_change= np.abs(self.FaultTraction1[ :, int(indexSSEFault[k,0]) ]) - np.abs(self.FaultTraction1[ :, int(indexSSEFault[k,1]) ])
+            normal_stress_change= (self.FaultTraction2[ :, int(indexSSEFault[k,0]) ]) - (self.FaultTraction2[ :, int(indexSSEFault[k,1]) ])
+            CFF = shear_stress_change + self.mu_f_d*normal_stress_change
+            #slip= np.abs(self.disp1[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.disp1[ :, int(indexSSEFault[k,0]) ])
+            
+            slipH= np.abs(np.abs(self.disp1[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.disp1[ :, int(indexSSEFault[k,0]) ]))
+            slipV= np.abs(np.abs(self.disp2[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.disp2[ :, int(indexSSEFault[k,0]) ]))
+            #slip=slipH + slipV
+            #slip  = (slipH**2.0 + slipV**2.0)**0.5
+            slip  = slipH
+            
+            lns4=ax[1].plot(self.FaultX/1e3, slip, '-k', linewidth=2 ,  label='fault slip')
+            ax[1].set_xlabel('X position along fault [km]', fontsize=17)
+            ax[1].set_ylabel('Fault slip  [m]', fontsize=17)
+            ax[1].grid(True)
+            ax[1].tick_params(labelsize=17)
+            ax[1].set_ylim([0,0.20])
+            ax[1] = ax[1].twinx()
+            lns5=ax[1].plot(self.FaultX/1e3, CFF, '-r', linewidth=2 , label='CFF')
+            
+            #plt.gca().invert_yaxis()
+            #ax[1].invert_yaxis()
+            ax[1].set_ylabel('CFF  [MPa]', fontsize=17)
+            
+            ax[1].set_title('Fault slip and CFF during SSE events ', fontsize=17)
+            #ax[1].grid(True)
+            ax[1].tick_params(labelsize=17)
+            ax[1].set_ylim([-0.4,0.4])
+            
+            lns = lns4+lns5
+            labs = [l.get_label() for l in lns]
+            ax[1].legend(lns, labs, loc='upper right', fontsize=17)
+        
+        #ax[1].invert_yaxis()
+        #ax[1].set_ylim([0,0.2])
+            #plt.gca().invert_yaxis()
+            
+            
+        print "printing ,",OutputNameFig       
+        plt.savefig(OutputNameFig,format='eps',dpi=1200, bbox_inches='tight')       
+        #plt.show()  
+    
+    def PlotMomentMagnitude(self, mainDir, shear_modulus, timeSSE):
         ##################Compute the Moment magnitude.
-    
+        
+        
+        indexSSEFault=np.zeros([timeSSE.shape[0], 2])
+        
+        for i in range(0,timeSSE.shape[0]):
+            tmp1 = np.abs( timeSSE[i,0] - self.FaultTime)
+            indexSSEFault[i,0]=tmp1.argmin()
+            
+            tmp2 = np.abs( timeSSE[i,1] - self.FaultTime)
+            indexSSEFault[i,1]=tmp2.argmin()
+            
+        
         #Fault shear modulus
         #shear_modulus=43642585000 ## [Pa]
         #Fault Area
         FaultArea=np.sum(np.sqrt(self.FaultX**2 + self.FaultY**2))
         
-        p1=  np.sqrt((self.FaultX[0]/1.0e3)**2.0 + (self.FaultY[0,0]/1.0e3- (-40))**2.0)
+        #p1=  np.sqrt((self.FaultX[0]/1.0e3)**2.0 + (self.FaultY[0]/1.0e3- (-40))**2.0)
+        p1=  np.sqrt(140**2.0 + 40**2.0)
         p2= 200.0
         FaultArea= (p1+p2)*1.0e3  #Fault Area in meters
         
         
         countSlip=0
-        FaultSlip=np.zeros(self.disp1.shape[1]-1)
-        for count in range(1,self.disp1.shape[1]):     
-            x=self.disp1[:,count]-self.disp1[:,count-1]
-            y=self.disp2[:,count]-self.disp2[:,count-1]
+        FaultSlip=np.zeros(indexSSEFault.shape[0])
+        for k in range(0,indexSSEFault.shape[0]):  
+            
+            x= np.abs(np.abs(self.disp1[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.disp1[ :, int(indexSSEFault[k,0]) ]))
+            y= np.abs(np.abs(self.disp2[ :, int(indexSSEFault[k,1]) ]) - np.abs(self.disp2[ :, int(indexSSEFault[k,0]) ]))
+            
+               
+            #x=self.disp1[:,count]-self.disp1[:,count-1]
+            #y=self.disp2[:,count]-self.disp2[:,count-1]
             FaultSlip[countSlip]=np.sum((x**2.0 + y**2.0)**0.5)
             countSlip=countSlip+1
             
-        
+        #print FaultSlip.shape
+        #print FaultSlip, FaultArea,shear_modulus
         M0=shear_modulus*FaultArea*FaultSlip
         Mw=(2.0/3.0)*np.log10(M0)-6.07
+        
+        print "Magnitude MW of the even = ", Mw
+        return
         
         Mw=np.sort(Mw)
         
@@ -1434,25 +1661,26 @@ class PyLith_JS(MathFunctions_JS):
             count=count+1
             
         
-        z=np.polyfit(Mw[0:-1], np.log10(N[0:-1]),1)
-        print "b value form the data: ", z[0]
-        p=np.poly1d(z)
-        
-        logN=p(Mw)
-        Nfit=10**logN
-        
-        p[1]=-1; p[0]=7
-        logN=p(Mw)
-        Nfit=10**logN
-        
-        x=np.arange(1,10,0.1,dtype=float)
+        if Mw.shape > 1:
+            z=np.polyfit(Mw[0:-1], np.log10(N[0:-1]),1)
+            print "b value form the data: ", z[0]
+            p=np.poly1d(z)
+            
+            logN=p(Mw)
+            Nfit=10**logN
+            
+            p[1]=-1; p[0]=7
+            logN=p(Mw)
+            Nfit=10**logN
+            
+            x=np.arange(1,10,0.1,dtype=float)
        
         OutputNameFig=mainDir + 'Figures/Magnitude_Statistics.eps'
         
         fig=plt.figure(10554354)
         ax=fig.add_subplot(111)
         ax.plot(Mw[0:-1],N[0:-1],'-ks')
-        ax.plot(Mw,Nfit,'-r', label='b=-1', linewidth=2)
+        #ax.plot(Mw,Nfit,'-r', label='b=-1', linewidth=2)
         ax.set_yscale('log')
         plt.grid()
         plt.xlabel('Magnitude Mw',fontsize=20)
@@ -1462,6 +1690,8 @@ class PyLith_JS(MathFunctions_JS):
         
         plt.savefig(OutputNameFig,format='eps',dpi=1000)
         plt.show()
+        
+        
     
     def PlotHistogramOfFaultSlip(self, mainDir, period_begin, period_end):
         

@@ -13,7 +13,7 @@ def main():
             self.g=9.80665
               
         def GetStress(self, depth):
-            #g=9.80665
+            g=9.80665
             #depth=np.arange(0,depth,1)               
             #self.Szz=self.rho*g*depth
             self.Sxx=(1.0/3.0)*self.Szz
@@ -126,6 +126,7 @@ def main():
     #print "Shear Modulus: ", Mantle.G
     print "Shear Modulus Continental Crust: ", Crust.G
     print "Shear Modulus Oceanic Crust: ", OceanicCrust.G
+    print "Shear Modulus Mantle: ", Mantle.G
     print "Average shear modulus on fault:", (Crust.G+OceanicCrust.G)/2
     
     Crust.SPoint(80000)

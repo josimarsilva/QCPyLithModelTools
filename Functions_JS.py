@@ -1,11 +1,7 @@
-import csv
 import numpy as np
-from numpy import genfromtxt
 import sys
 import os.path
-import math
 import matplotlib.pyplot as plt
-from scipy import signal
 from MathFunctions_JS import * 
 
 
@@ -39,19 +35,34 @@ def DetrendLinear(data, degree=1):
 def Find_Best_Fit_Between_Model_and_Data(model, data, station_List):
     
     ''' This function will compare the SSE waveform with the GPS data at each station
-    It will then look for the global minimum values and output the SSE index corresponding to it'''
+    It will then look for the global minimum values and output the SSE index corresponding to it
     
-    count=0
+    Assumption : it is assumed that the index where the SSE start and stops is the same for vertical and horizontal 
+        compoenents
+    
+    '''
+    
+    
     #station_List=['DOAR', 'MEZC', 'IGUA']
     SSE_RMS_Final=np.zeros([1,5])
-    SSE_RMS=np.zeros([model.SSEind.shape[0],5,len(station_List)])
+    #SSE_RMS=np.zeros([model[0].SSEind.shape[0],5,len(station_List)])
     
-    ### Loop over all the stations to get the RMS between the SSE and GPS stations
-    for station_name in station_List:
-        minRMS_Global, SSE_RMS[:,:,count] = Compare_Data_and_Model_Displacements(model, data, station_name)
-        SSE_RMS_Final=np.vstack([SSE_RMS_Final,SSE_RMS[:,:,count]])
-        count=count+1
-    
+    ## Loop over all components of the model and GPS stations
+    for component in range(0,len(model)):
+        
+        ## The attibute self[i].SSE_RMS contains all the SSE information required in order to plot it for all 
+        ## stations and all the components
+        model[component].SSE_RMS=np.zeros([model[component].SSEind.shape[0],5,len(station_List)])
+        ### Loop over all the stations to get the RMS between the SSE and GPS stations
+        count=0
+        for station_name in station_List:
+            
+            ## SSE_RMS contains the list of RMS values for all SSE events at for a specific station and
+            # for all components
+            tmp, model[component].SSE_RMS[:,:,count] = Compare_Data_and_Model_Displacements(model[component], data[component], station_name)
+            SSE_RMS_Final=np.vstack([SSE_RMS_Final,model[component].SSE_RMS[:,:,count]])
+            count=count+1
+        
     
     ################ In the next steps I try to find the glabl mininium between all RMS values
     ### and ALLL SEE events from all stations
@@ -62,7 +73,7 @@ def Find_Best_Fit_Between_Model_and_Data(model, data, station_List):
     SSEindList=np.sort(SSEindList)  ## This contains the unique set of SSE ind from all stations
     
     
-    minRMS_Global=np.zeros([SSEindList.shape[0],2])
+    SSE_RMS_and_ID=np.zeros([SSEindList.shape[0],2])
     for i in range(0,SSEindList.shape[0]):
         tmp=np.where( SSEindList[i] == SSE_RMS_Final[:,3])
         #print "value = ", SSE_RMS_Final[tmp,3]
@@ -70,23 +81,24 @@ def Find_Best_Fit_Between_Model_and_Data(model, data, station_List):
         #print "test",tmp, SSEindList[i], SSE_RMS_Final[:,3]
         RMS=np.sum(SSE_RMS_Final[tmp,0])    #Get the sum of the RMS value from all stations
         #print RMS
-        minRMS_Global[i,:] =[RMS, SSEindList[i]] ## keep the index of the SSE event
+        SSE_RMS_and_ID[i,:] =[RMS, SSEindList[i]] ## keep the index of the SSE event
+        #minRMS_Global[i,:] =[RMS, SSEindList[i]] ## keep the index of the SSE event
     
     
-    SSE_RMS_Final=np.copy(minRMS_Global) ### This contains  list of the RMS value for each SSE for all stations
+    SSE_RMS_Final=np.copy(SSE_RMS_and_ID) ### This contains  list of the RMS value for each SSE for all stations
     ind=SSE_RMS_Final[:,0].argmin()
     minRMS_Global=SSE_RMS_Final[ind,:]  ### This contains a list of the SSE information with the minium global misfit
     
     ## Here I find the index corresponding to the end of the SSE that best fits the data globally
-    ind_sse_end=np.where(int(minRMS_Global[1]) == model.SSEind[:,0])
-    minRMS_Global=np.append(minRMS_Global, model.SSEind[ind_sse_end,1])
+    ind_sse_end=np.where(int(minRMS_Global[1]) == model[0].SSEind[:,0])
+    minRMS_Global=np.append(minRMS_Global, model[0].SSEind[ind_sse_end,1])
     
     ## Return SSE information
-    #minRMS_Global = > contains the indeixed of hte SSE that best fit all the stations
-    #SSE_RMS_Final = > contains the list of SSE event ids and their corresponding RMS value, for all statios
-    #SSE_RMS = > contains the start and stop indexes, the SSE id and the RMS value for each statio
+    #minRMS_Global = > contains the indeixed of hte SSE that best fit all the stations, and all compoenents
+    #SSE_RMS_Final = > contains the list of SSE event ids and their corresponding RMS value, for all statios and all components
+    #model[i].SSE_RMS = > contains the start and stop indexes, the SSE id and the RMS value for each statio and all component
     #and all SSE events
-    return minRMS_Global, SSE_RMS, SSE_RMS_Final
+    return minRMS_Global, model, SSE_RMS_Final
     
     
      
@@ -116,7 +128,7 @@ def Compare_Data_and_Model_Displacements(model, data, station_name):
     data.data_no_trend, data.data_trend_polynomial=DetrendLinear(data.yinterp)
     
     
-    print "Working on ",data.nameGPS[model_sta_id],  model.nameGPS[model_sta_id]
+    #print "Working on ",data.nameGPS[model_sta_id],  model.nameGPS[model_sta_id]
         
     '''
     for i in range(0,len(model.nameGPS)):
@@ -157,12 +169,12 @@ def Compare_Data_and_Model_Displacements(model, data, station_name):
         #plt.figure()
         for i in range(0,data.data_no_trend.shape[0]):
             
-            if k-i >= 0 and k-i+data.data_no_trend.shape[0] <= model.Xtime.shape[0]:
+            if k-i >= 0 and k-i+data.data_no_trend.shape[0] <= model.disp.shape[0]:
                 
                 #Here I shift the SSE event form the model to find a good match with te data
                 ibegin=k-i
                 iend=k-i+data.data_no_trend.shape[0]
-                ymodel=model.Xtime[ibegin:iend,model_sta_id]
+                ymodel=model.disp[ibegin:iend,model_sta_id]
                 
                 ### I have to detrend y model and data before I compare them
                 #ymodel=MathFunctions_JS()
@@ -217,11 +229,17 @@ def Plot_Comparison_SSE_Best_Fit_to_Data(model, data, station_List, SSE_RMS_Fina
     ''' This function plots the surface displacement from the pylith model
     and the measured GPS data'''
     
-    OutputNameFig1=model.mainDir + 'Figures/Misfit_Compare_Data_and_Model_All_SSE.eps'
-    OutputNameFig2=model.mainDir + 'Figures/Misfit_Compare_Data_and_Model_Best_SSE.eps'
+    #OutputNameFig1=model.mainDir + 'Figures/Misfit_Compare_Data_and_Model_All_SSE.eps'
+    #OutputNameFig2=model.mainDir + 'Figures/Misfit_Compare_Data_and_Model_Best_SSE.eps'
+    
+    OutputNameFig1=model.mainDir + 'Figures/Misfit_Compare_Data_and_Model_All_SSE_'+model.component+'.eps'
+    OutputNameFig2=model.mainDir + 'Figures/Misfit_Compare_Data_and_Model_Best_SSE_'+model.component+'.eps'
     
     fig1,ax1=plt.subplots()
     fig2,ax2=plt.subplots()
+    
+    flag_label_1=1
+    flag_label_2=1
     
     for station_name in station_List:
             
@@ -234,30 +252,41 @@ def Plot_Comparison_SSE_Best_Fit_to_Data(model, data, station_List, SSE_RMS_Fina
         ### Loop over all SSE events in the list
         for i in range(0,SSE_RMS_Final.shape[0]):
             
-            ## Her I have to ge the correspokding start and stop indexes for this stations,
+            ## Her I have to get the correspokding start and stop indexes for this stations,
+            
             tmp=np.where( SSE_RMS_Final[i,1] == SSE_RMS[:,3,model_sta_id] )
             indBegin= int(SSE_RMS[tmp,1,model_sta_id])
             indEnd= int(SSE_RMS[tmp,2,model_sta_id])
             
-            ymodel=model.Xtime[ indBegin : indEnd , model_sta_id]
+            
+            ymodel=model.disp[ indBegin : indEnd , model_sta_id]
             ymodel_no_trend, ymodel_data_polynomial=DetrendLinear(ymodel) 
         
             #xmodel = np.arange(data.timeGPS[0,data_sta_id],np.amax( data.timeGPS[:,:] ),data.dt)
-            #print ymodel_no_trend.shape, data.xinterp.shape
+            #print ymodel_no_trend.shape, data.xinterp.shape, data.data_trend_polynomial.shape, station_name, i
+            
+            '''
+            if ymodel_no_trend.shape[0] != data.xinterp.shape[0]:
+                print "Found some SSE events that do not have the same window size as data"
+                print "Skiiping this plot"
+            else:
+            '''
             
             
+            ax1.plot(data.timeGPSAll  , data.dispGPSAll,'ko' ,  markersize=3)
             ax1.plot(data.xinterp , data.data_trend_polynomial + ymodel_no_trend,'-r')
             #plt.plot(timefinal , ymodel_trend_polynomial + ymodel_no_trend,'-r')
             #plt.plot(data.xinterp  , data.data_trend_polynomial + data.data_no_trend,'ko' , linewidth=3)
-            ax1.plot(data.timeGPSAll  , data.dispGPSAll,'ko' , linewidth=3)
+            
         #plt.ylim([0,1])
         ax1.set_xlim([2000,2015])
-        ax1.set_ylim([0,0.45])
+        ax1.set_ylim([0,0.55])
         ax1.set_xlabel('Time [years]', fontsize=17)
-        ax1.set_ylabel('X displacement [m]', fontsize=17)
+        ax1.set_ylabel(model.component+' displacement [m]', fontsize=17)
         ax1.tick_params(labelsize=16)
         ax1.text(np.amax(data.timeGPSAll[:,data_sta_id]) + 0.5, np.amax(data.dispGPSAll[:,data_sta_id]), data.nameGPS[data_sta_id], fontsize=17)
-        ax1.legend(['Data','Model'],loc='lower right', fontsize=17)
+        #ax1.legend(['Data','Model'],loc='lower right', fontsize=17)
+        #ax1.legend(loc='lower right', fontsize=17)
         ax1.grid(True)
         ax1.set_title('All SSE  ')
         
@@ -268,24 +297,29 @@ def Plot_Comparison_SSE_Best_Fit_to_Data(model, data, station_List, SSE_RMS_Fina
         indBegin= int(SSE_RMS[tmp,1,model_sta_id])
         indEnd= int(SSE_RMS[tmp,2,model_sta_id])
             
-        ymodel=model.Xtime[ indBegin : indEnd , model_sta_id]
+        #ymodel=model.Xtime[ indBegin : indEnd , model_sta_id]
+        ymodel=model.disp[ indBegin : indEnd , model_sta_id]
         #ymodel=MathFunctions_JS(ymodel)
         ymodel_no_trend, ymodel_data_polynomial=DetrendLinear(ymodel) 
         
         #ymodel=model.Xtime[ int( minRMS_Global[1] ) : int( minRMS_Global[2] ) ,model_sta_id]
         #ymodel_no_trend, ymodel_data_polynomial=DetrendLinear(ymodel) 
         
-        
+                
+        ax2.plot(data.timeGPSAll  , data.dispGPSAll,'ko', markersize=3 )
+        #ax2.plot(data.xinterp  , data.yinterp,'ko', markersize=3 )
         ax2.plot(data.xinterp  , data.data_trend_polynomial + ymodel_no_trend ,'-r', linewidth=3)
+            
         #plt.plot(data.xinterp  , data.data_trend_polynomial + data.data_no_trend,'ko' , linewidth=3)
-        ax2.plot(data.timeGPSAll  , data.dispGPSAll,'ko' , linewidth=3)
+        
         ax2.set_title('SSE with the smallest RMS value ')
         ax2.text(np.amax(data.timeGPSAll[:,data_sta_id]) + 0.5, np.amax(data.dispGPSAll[:,data_sta_id]), data.nameGPS[data_sta_id], fontsize=17)
         ax2.set_xlim([2000,2015])
-        ax2.set_ylim([0,0.45])
+        ax2.set_ylim([0,0.55])
         ax2.set_xlabel('Time [years]', fontsize=17)
-        ax2.set_ylabel('X displacement [m]', fontsize=17)
-        ax2.legend(['Model','Data'],loc='lower right', fontsize=17)
+        ax2.set_ylabel(model.component+' displacement [m]', fontsize=17)
+        #ax2.legend(['Model','Data'],loc='lower right', fontsize=17)
+        #ax2.legend(loc='lower right', fontsize=17)
         ax2.tick_params(labelsize=16)
         ax2.grid(True)
         
