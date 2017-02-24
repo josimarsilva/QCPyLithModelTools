@@ -32,6 +32,7 @@ def main():
     
         mu_s=float(str(sys.argv[7]))          #Mean value
         mu_s_constant=float(str(sys.argv[8]) )     #Standard deviation
+        
     elif Friction_Type == "Linear":
         ReferenceDir=str(sys.argv[2])   #Reference Dir to get the fault geometry information
         mainDir=str(sys.argv[3])   #Reference Dir to get the fault geometry information
@@ -41,6 +42,7 @@ def main():
         intercept_s=float(str(sys.argv[5]) )     #Standard deviation
         slope_d=float(str(sys.argv[6]) )     #Standard deviation
         intercept_d=float(str(sys.argv[7]))          #Mean value
+        tmp=float(str(sys.argv[8]))          #Mean value
         
     else:    
         print "ERROR ! FRICTION COEFFICIENT MODEL DOES NOT EXIST"
@@ -54,7 +56,10 @@ def main():
     basenameSurface='GPS_Displacement'
     number=0
     #data=PyLith_JS(dir,basenameSurface,number)
-    data=PyLith_JS()
+    direction="none"
+    TimeBegin="0"
+    TimeEnd=-"0"
+    data=PyLith_JS(dir, direction, TimeBegin, TimeEnd)
     
     
     Time=np.array([0])  ### HERE I GET ONLY THE FIRST TIME STEP
