@@ -305,6 +305,13 @@ class PyLith_JS(MathFunctions_JS):
         self.mu_f_s= slope_s*xtmp + intercept_s
         self.mu_f_d= slope_d*xtmp + intercept_d
         
+        for i in range(0,self.mu_f_s.shape[0]):
+            if self.mu_f_s[i] < 0:
+                self.mu_f_s[i] = 0
+            
+            if self.mu_f_d[i] < 0:
+                self.mu_f_d[i] = 0
+        
         #self.mu_f_d=mu_d_constant+mu_d*np.exp(exponent*xtmp)
         #self.mu_f_s=mu_s_constant+mu_s*np.exp(exponent*xtmp)
         
