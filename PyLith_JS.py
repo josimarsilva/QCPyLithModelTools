@@ -385,7 +385,7 @@ class PyLith_JS(MathFunctions_JS):
     def FindIndexTime(self,timeSearch):
         #Xcoord=-10 #X coordinate in km to plot result.
         
-        tdata=np.array((self.year[:,0]),dtype=float)
+        tdata=np.array((self.FaultTime[:]),dtype=float)
         tmp = np.abs(timeSearch - tdata)
         self.indextime=tmp.argmin()
         
