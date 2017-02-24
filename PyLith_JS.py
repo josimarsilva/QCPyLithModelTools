@@ -348,7 +348,8 @@ class PyLith_JS(MathFunctions_JS):
         
         for i in range(0,self.FaultX.shape[0]):
             #print self.mu_f_s[i], self.mu_f_d[i]
-            outstring = str(self.FaultX[i])+ ' '+str(self.FaultY[i])+ ' ' + str(self.mu_f_s[i]) + ' ' + str(self.mu_f_d[i]) +   ' 0.05  0 \n' 
+            #outstring = str(self.FaultX[i])+ ' '+str(self.FaultY[i])+ ' ' + str(self.mu_f_s[i]) + ' ' + str(self.mu_f_d[i]) +   ' 0.05  0 \n'
+            outstring = self.FaultX[i] + ' '+ self.FaultY[i] + ' ' + self.mu_f_s[i] + ' ' + self.mu_f_d[i] +   ' 0.05  0 \n' 
             
             f.write(outstring)
                 
