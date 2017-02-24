@@ -56,6 +56,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
         
         for pos in range(0,self.disp.shape[1] ):
             count=0
+            
             for i in range(0,self.disp.shape[0]):
                 
                 if  tempYear[i] >= self.TimeBegin and tempYear[i] <= self.TimeEnd:
@@ -137,6 +138,7 @@ class Load_and_QC_Model_GPS(PyLith_JS):
            
 
     def GetIndexOfSSEOccurrence(self,mainDir,station_name):
+        ''' This function gets the index of SSE displacement based on the GPS surface displacement of the model '''
 
         ### Find index corresponding to the station name
         pos=Get_Station_ID(self.nameGPS,station_name)

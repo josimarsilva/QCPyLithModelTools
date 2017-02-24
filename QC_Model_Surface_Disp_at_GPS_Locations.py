@@ -21,15 +21,19 @@ def main():
     TimeBeginLoadData, TimeEndLoadData=2004, 2009
     
     #Here is the model time window to search for the best model parameters that match the data
-    #TimeBeginModel, TimeEndModel=10.972, 10.98
-    TimeBeginModel, TimeEndModel=11, 14
+    #TimeBeginModel, TimeEndModel=12.1460, 12.1475
+    #TimeBeginModel, TimeEndModel=12.1150, 12.1885
+    #TimeBeginModel, TimeEndModel=11.28, 11.6
+    #TimeBeginModel, TimeEndModel=12.1, 13
+    #TimeBeginModel, TimeEndModel=11.075, 11.16
+    TimeBeginModel, TimeEndModel=9.5, 20
     
     dt=0.25
-    mu_s="0.05"
-    mu_s_constant=0.07
+    mu_s="0.12"
+    mu_s_constant=0
     mu_d=0.01
-    mu_d_constant=0.07
-    exponent="-0.07"
+    mu_d_constant=0
+    exponent="-0.03"
     
     ## Good example here
     #mu_s="0.07"
@@ -100,7 +104,7 @@ def main():
     TimeBegin, TimeEnd=0,0
     fault=Load_and_QC_Model_GPS(mainDir, direction, TimeBegin, TimeEnd)
     fault.Load_Fault_Data_Exported_from_H5()
-    
+
     #read friction coefficient instead of creating a new one.
     fault.ReadFrictionCoefficient()
     #fault.PlotGeometryWithFriction()
@@ -109,7 +113,6 @@ def main():
     #fault.PlotAnimation_FOR_AGU_StressPropagation(self,mainDir,Time,step, xpoints, mu_s)
     
     
-        
     ### Get index of the SSE occurrence
     #pos=0
     station_name='DOAR'
@@ -117,6 +120,22 @@ def main():
     #model[0].PlotSSEIntervalOccurence(mainDir,station_name)
     #plt.show()
     #return
+    
+    
+    #The goal now is to find all the time indexes where fault displacement occurred.
+    #This will correspond to all SSE events, even thoses that were not recorded by the GPS surface
+    #displacement 
+
+    #fault.PlotFault_All_Fault_Slips_And_Geometry(mainDir, TimeBeginModel, TimeEndModel)
+    #fault.PlotFault_All_Fault_SlipRate_And_Geometry(mainDir, TimeBeginModel, TimeEndModel) 
+    #fault.PlotFault_CFF_EveryTimeStep_And_Geometry_MAKE_ANIMATION(mainDir, model[0], TimeBeginModel, TimeEndModel)
+    #fault.PlotFault_Cummulative_Diplacement_EveryTimeStep(mainDir, model[0], TimeBeginModel, TimeEndModel)  
+    fault.PlotFault_Cummulative_StressChange_MAKE_ANIMATION(mainDir, model[0], TimeBeginModel, TimeEndModel)
+    
+    return  
+    
+    plt.show()
+    return
     
     ## Here what I am doing is to make sure the indexes of hte SSE occurrence match between 
     #vertical and horizontal components
@@ -154,6 +173,7 @@ def main():
     
     
     return
+
 
     #################################3
     mu=fault.mu_f_d

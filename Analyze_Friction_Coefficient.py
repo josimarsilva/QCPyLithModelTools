@@ -5,7 +5,7 @@ import sys
 import os.path
 import math
 import matplotlib.pyplot as plt
-from PvPython.PyLith_JS import *
+from PyLith_JS import *
 
 
 
