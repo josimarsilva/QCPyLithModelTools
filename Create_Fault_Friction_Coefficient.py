@@ -58,7 +58,7 @@ def main():
     #data=PyLith_JS(dir,basenameSurface,number)
     direction="none"
     TimeBegin="0"
-    TimeEnd=-"0"
+    TimeEnd="0"
     data=PyLith_JS(dir, direction, TimeBegin, TimeEnd)
     
     
