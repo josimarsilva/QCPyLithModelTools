@@ -222,7 +222,7 @@ class PyLith_JS(MathFunctions_JS):
         #Design function to create a smoothed friction coefficient variation
         OutputNameFig=mainDir+'./Figures/Slip_Weakening_Friction_Coefficient.eps'
         
-        x=self.FaultX[:,0]/1e3
+        x=self.FaultX[:]/1e3
 
         #Exponentially decaying friction coeff
         xmin=np.abs(np.amin(x))
@@ -288,6 +288,83 @@ class PyLith_JS(MathFunctions_JS):
         plt.savefig(OutputNameFig,format='eps',dpi=1000)
         #plt.show()
         
+
+    def CreateLinearFaultFrictionVariation(self,mainDir, slope_s,slope_d, intercept_s, intercept_d):
+        
+        print "Creating Linear friction coefficient..."
+        
+        #Design function to create a smoothed friction coefficient variation
+        OutputNameFig=mainDir+'./Figures/Slip_Weakening_Friction_Coefficient.eps'
+        
+        x=self.FaultX[:]/1e3
+
+        #Exponentially decaying friction coeff
+        xmin=np.abs(np.amin(x))
+        xtmp=x+xmin
+        
+        self.mu_f_s= slope_s*xtmp + intercept_s
+        self.mu_f_d= slope_d*xtmp + intercept_d
+        
+        #self.mu_f_d=mu_d_constant+mu_d*np.exp(exponent*xtmp)
+        #self.mu_f_s=mu_s_constant+mu_s*np.exp(exponent*xtmp)
+        
+        #self.mu_f_s=self.mu_f_d + self.mu_f_d*0.2
+        #self.mu_f_s=self.mu_f_d
+        #self.mu_f_s=0.1+0.6*np.exp(-0.03*xtmp)
+        
+        #Export friction coefficient variation here.
+        Dir=mainDir+'spatial/'
+        FileName=Dir+'friction_function.spatialdb'
+        print "Saving File: ", FileName
+        f=open(FileName,'w')
+        f.close()
+        f=open(FileName,'a')
+        
+        headerFile ="""#SPATIAL.ascii 1
+        SimpleDB {
+          num-values =      4
+          value-names =  static-coefficient dynamic-coefficient slip-weakening-parameter cohesion
+          value-units =   none none  m Pa
+          num-locs =  86
+          data-dim =    1
+          space-dim =    2
+          cs-data = cartesian {
+          to-meters = 1
+          space-dim = 2
+        }
+        }
+        
+        """
+        
+        #print headerFile
+        f.write(headerFile)
+        
+        for i in range(0,self.FaultX.shape[0]):
+            #print self.mu_f_s[i], self.mu_f_d[i]
+            outstring = str(self.FaultX[i])+ ' '+str(self.FaultY[i])+ ' ' + str(self.mu_f_s[i]) + ' ' + str(self.mu_f_d[i]) +   ' 0.05  0 \n' 
+            
+            f.write(outstring)
+                
+        f.close()
+        
+        
+        print "\n Number of values on the Fault traction file ==",self.FaultX.shape[0]
+        print "\n \n Make sure you edit the Pylith File to reflect the numbe rows of your file \n\n"
+        
+        figN=int(np.random.rand(1)*500)
+        
+        plt.figure(figN)
+        #plt.rc('text',usetext=True)
+        plt.plot(self.FaultX/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
+        plt.plot(self.FaultX/1e3, self.mu_f_d[:],'-k',linewidth=2,label='$\mu_d$')
+        #plt.plot(self.FaultX/1e3, mu_s*np.ones(self.FaultX.shape[0]),'-k', linewidth=2, label='$\mu_d$')
+        plt.legend(loc='upper right')
+        plt.xlabel('X position along fault [km]')
+        plt.ylabel('friction coefficient')
+        plt.grid()
+        plt.savefig(OutputNameFig,format='eps',dpi=1200)
+        #plt.show()
+
         
     def FindIndex(self,xcoord):
         #Xcoord=-10 #X coordinate in km to plot result.

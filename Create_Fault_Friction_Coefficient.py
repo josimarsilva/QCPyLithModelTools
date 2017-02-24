@@ -70,6 +70,7 @@ def main():
     
     #data.CreateGaussianFaultFrictionVariation(mainDir, mu, sigma, factor_mu , friction_constant)
     data.CreateExponentialFaultFrictionVariation(mainDir, exponent, mu_d, mu_d_constant, mu_s, mu_s_constant)
+    #data.CreateLinearFaultFrictionVariation(mainDir,slope)
     
     #read friction coefficient instead of creating a new one.
     #data.ReadFrictionCoefficient(mainDir)

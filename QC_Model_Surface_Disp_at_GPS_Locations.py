@@ -105,6 +105,24 @@ def main():
     fault=Load_and_QC_Model_GPS(mainDir, direction, TimeBegin, TimeEnd)
     fault.Load_Fault_Data_Exported_from_H5()
 
+    #Create linear fault friction variation
+    x=fault.FaultX[:]/1e3
+    #Exponentially decaying friction coeff
+    xmin=np.abs(np.amin(x))
+    xtmp=x+xmin
+    
+    slope1=-2.5e-3
+    slope2=-1.9e-3
+    y1=slope1*xtmp + 0.6
+    y2=slope2*xtmp + 0.4
+    
+    plt.figure(1)
+    plt.plot(x,y1)
+    plt.plot(x,y2,'r')
+    plt.ylim(0,1)
+    plt.show()
+    return
+
     #read friction coefficient instead of creating a new one.
     fault.ReadFrictionCoefficient()
     #fault.PlotGeometryWithFriction()
