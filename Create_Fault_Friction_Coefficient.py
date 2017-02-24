@@ -42,7 +42,7 @@ def main():
         intercept_s=float(str(sys.argv[5]) )     #Standard deviation
         slope_d=float(str(sys.argv[6]) )     #Standard deviation
         intercept_d=float(str(sys.argv[7]))          #Mean value
-        tmp=float(str(sys.argv[8]))          #Mean value
+        
         
     else:    
         print "ERROR ! FRICTION COEFFICIENT MODEL DOES NOT EXIST"
