@@ -1369,7 +1369,7 @@ class PyLith_JS(MathFunctions_JS):
         axarr[1].plot(self.FaultX/1e3, self.mu_f_s,'-b',linewidth=2,label='$\mu_s$')
         axarr[1].plot(self.FaultX/1e3, self.mu_f_d,'-k',linewidth=2,label='$\mu_d$')
         axarr[0].set_ylim([0,-80])
-        #axarr[1].set_ylim([0,1])
+        axarr[1].set_ylim([0,1])
         axarr[0].invert_yaxis()
         axarr[1].invert_yaxis()
         plt.xlim([self.FaultX[0]/1e3, self.FaultX[-1]/1e3])

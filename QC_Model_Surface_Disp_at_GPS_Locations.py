@@ -15,7 +15,7 @@ def main():
     #TimeWindow=169000
     #TimeWindow=88000
     #TimeWindow=100000
-    Tbegin, Tend, dt = 70000, 80000, 0.25
+    Tbegin, Tend, dt = 169000, 190000, 0.25
     
     ##Here is the time data time window for inversion
     TimeBeginLoadData, TimeEndLoadData=2004, 2009
@@ -26,7 +26,7 @@ def main():
     #TimeBeginModel, TimeEndModel=11.28, 11.6
     #TimeBeginModel, TimeEndModel=12.1, 13
     #TimeBeginModel, TimeEndModel=11.075, 11.16
-    TimeBeginModel, TimeEndModel=0, 100
+    TimeBeginModel, TimeEndModel=0, 200
     
     dt=0.25
     mu_s="0.12"
@@ -36,8 +36,11 @@ def main():
     exponent="-0.03"
 
     slope_s="-0.0025"
+    #slope_s="0"
     intercept_s="0.6"
-    slope_d="-0.0025"
+    #slope_d="-0.0025"
+    #slope_d="0"
+    slope_d="-0.0019"
     intercept_d="0.4"
 
     
