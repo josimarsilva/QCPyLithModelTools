@@ -7,6 +7,7 @@ from matplotlib import animation
 from PyLith_JS import *
 from Load_and_QC_Model_GPS import *
 from Functions_JS import *
+from numpy import float128
 
 
 def main():
@@ -15,6 +16,7 @@ def main():
     #TimeWindow=169000
     #TimeWindow=88000
     #TimeWindow=100000
+    #Tbegin, Tend, dt = 10000, 20000, 0.25
     Tbegin, Tend, dt = 169000, 190000, 0.25
     
     ##Here is the time data time window for inversion
@@ -25,22 +27,23 @@ def main():
     #TimeBeginModel, TimeEndModel=12.1150, 12.1885
     #TimeBeginModel, TimeEndModel=11.28, 11.6
     #TimeBeginModel, TimeEndModel=12.1, 13
-    #TimeBeginModel, TimeEndModel=11.075, 11.16
-    TimeBeginModel, TimeEndModel=0, 200
+    #TimeBeginModel, TimeEndModel=9, 20
+    TimeBeginModel, TimeEndModel=155, 200
     
     dt=0.25
-    mu_s="0.12"
-    mu_s_constant=0
-    mu_d=0.01
-    mu_d_constant=0
-    exponent="-0.03"
+    mu_s="0.07"
+    mu_s_constant=0.05
+    mu_d=0.03
+    mu_d_constant=0.05
+    exponent="-0.07"
 
-    slope_s="-0.0025"
+    #slope_s="-0.0025"
+    slope_s="0"
     #slope_s="0"
     intercept_s="0.6"
     #slope_d="-0.0025"
-    #slope_d="0"
-    slope_d="-0.0019"
+    slope_d="0"
+    #slope_d="-0.0019"
     intercept_d="0.4"
 
     
@@ -53,13 +56,14 @@ def main():
     
     ### For the Engaging server use this
     #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/mu_s_"+str(mu_s)+"/mu_s_constant_"+str(mu_s_constant)+"/mu_d_"+str(mu_d)+"/mu_d_constant_"+str(mu_d_constant)+"/exponent_"+str(exponent)+"/"
-    mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/Linear_Friction_Coefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/slope_s_"+str(slope_s)+"/intercept_s_"+str(intercept_s)+"/slope_d_"+str(slope_d)+"/intercept_d_"+str(intercept_d)+"/" 
-    dirGPS='/nobackup1/josimar/Projects/SlowEarthquakes/data/GPS/'
+    #mainDir="/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/Linear_Friction_Coefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/slope_s_"+str(slope_s)+"/intercept_s_"+str(intercept_s)+"/slope_d_"+str(slope_d)+"/intercept_d_"+str(intercept_d)+"/" 
+    #dirGPS='/nobackup1/josimar/Projects/SlowEarthquakes/data/GPS/'
     
     ###For the Mac Computer use this
-    #mainDir="/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/SensitivityTests/FrictionCoefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/mu_s_"+str(mu_s)+"/mu_s_constant_"+str(mu_s_constant)+"/mu_d_"+str(mu_d)+"/mu_d_constant_"+str(mu_d_constant)+"/exponent_"+str(exponent)+"/"
+    mainDir="/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/SensitivityTests/Linear_Friction_Coefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/slope_s_"+str(slope_s)+"/intercept_s_"+str(intercept_s)+"/slope_d_"+str(slope_d)+"/intercept_d_"+str(intercept_d)+"/"
+    #mainDir="/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/SensitivityTests/Exponential_Friction_Coefficient/TimeWindow_"+str(Tbegin)+"_"+str(Tend)+"/dt_"+str(dt)+"/mu_s_"+str(mu_s)+"/mu_s_constant_"+str(mu_s_constant)+"/mu_d_"+str(mu_d)+"/mu_d_constant_"+str(mu_d_constant)+"/exponent_"+str(exponent)+"/"
     #dirGPS='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/Data/GPS/data/'
-    #dirGPS='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/Data/GPS/Digitalization/'
+    dirGPS='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/Data/GPS/Digitalization/'
     
     print "Main Dir = " , mainDir
     
@@ -115,7 +119,7 @@ def main():
     fault=Load_and_QC_Model_GPS(mainDir, direction, TimeBegin, TimeEnd)
     fault.Load_Fault_Data_Exported_from_H5()
 
-    
+        
     #read friction coefficient instead of creating a new one.
     fault.ReadFrictionCoefficient()
     fault.PlotGeometryWithFriction()
@@ -138,7 +142,7 @@ def main():
     Loc=np.array([-139,200])
     startyear=np.array([0,0e3])
     endyear=np.array([80e3,80e3])
-    fault.PlotPointFaultPointDisplacementRate(mainDir, Loc, startyear, endyear)
+    #fault.PlotPointFaultPointDisplacementRate(mainDir, Loc, startyear, endyear)
     
     
     #The goal now is to find all the time indexes where fault displacement occurred.
@@ -150,10 +154,29 @@ def main():
     #fault.PlotFault_CFF_EveryTimeStep_And_Geometry_MAKE_ANIMATION(mainDir, model[0], TimeBeginModel, TimeEndModel)
     #fault.PlotFault_Cummulative_Diplacement_EveryTimeStep(mainDir, model[0], TimeBeginModel, TimeEndModel)  
     #fault.PlotFault_Cummulative_StressChange_MAKE_ANIMATION(mainDir, model[0], TimeBeginModel, TimeEndModel)
+    #fault.PlotFault_Cummulative_StressChange_And_Fault_Slip_MAKE_ANIMATION(mainDir, model[0], TimeBeginModel, TimeEndModel)
     
+    
+    tbegin=160.0
+    tend=161.5
+    fault.PlotFault_Stress_MAKE_ANIMATION( mainDir, model[0], tbegin, tend)
+    
+    return
+    #### Plot slip rate at a specific point
+    Xpos=np.array([-200,-100,-50,0,50,100,150,250])
+    Vpl=6.1
+    fault.PlotSlipVelocity_At_Point(mainDir, Xpos, TimeBeginModel, TimeEndModel, Vpl)
+    fault.PlotShearStressChangeAccumulation_At_Point(mainDir, Xpos, TimeBeginModel, TimeEndModel, Vpl)
+    fault.Plot_Coulomb_Stress_Path(mainDir, TimeBeginModel, Xpos)
+    
+    ## This one is not working and I don't know why
+    #fault.Plot_ShearStressChange_And_Slip_Change_Accumulation_At_Point(mainDir, Xpos, TimeBeginModel, TimeEndModel, Vpl)
     #return  
     
+    return
     plt.show()
+    
+    
     return
     
     ## Here what I am doing is to make sure the indexes of hte SSE occurrence match between 

@@ -2322,7 +2322,7 @@ class PyLith_JS(MathFunctions_JS):
                 
                 plt.ion()
                 
-                f,ax=plt.subplots(4,sharex=False, num=1,figsize=[12,20])
+                f,ax=plt.subplots(4,sharex=False, num=1123123,figsize=[12,20])
                                        
                         
                 f.set_size_inches(10,20)
@@ -2356,7 +2356,7 @@ class PyLith_JS(MathFunctions_JS):
                 #plt.gca().invert_yaxis()
                 
                 flagSelTime=1
-                stepTime=100
+                stepTime=500
                 for k in range(1,self.disp1.shape[1],stepTime):    
                     
                     
@@ -2396,7 +2396,7 @@ class PyLith_JS(MathFunctions_JS):
                         ax[1].set_ylabel('Cummulative fault slip  [m]', fontsize=fontsizeJS)
                         ax[1].grid(True)
                         ax[1].tick_params(labelsize=fontsizeJS)
-                        ax[1].set_ylim([0,100])
+                        ax[1].set_ylim([0,2000])
                         #ax[1].set_ylim([1e-4,1e1])
                         #ax[1].set_ylim([1e-2,1e3])
                         ax[1].set_title(' time = '+str(count_t*0.25) + ' years', fontsize=fontsizeJS)
@@ -2412,7 +2412,7 @@ class PyLith_JS(MathFunctions_JS):
                         ax[2].grid(True)
                         ax[2].tick_params(labelsize=fontsizeJS)
                         #ax[2].set_ylim([1e-4,1e1])
-                        ax[2].set_ylim([1e-5,1e2])
+                        ax[2].set_ylim([1e-5,1e3])
                         #ax[2].set_ylim([1e-1,5e2])
                         
                         ax[2].set_title(' time = '+str(count_t*0.25) + ' years', fontsize=fontsizeJS)
@@ -2449,7 +2449,7 @@ class PyLith_JS(MathFunctions_JS):
                         ax[3].set_ylabel('Horizontal displacement', fontsize=fontsizeJS)
                         ax[3].grid(True)
                         ax[3].tick_params(labelsize=fontsizeJS)
-                        ax[3].set_ylim([0,100])
+                        ax[3].set_ylim([-500,500])
                         
                         #f.set_tight_layout()
                         #f.tight_layout()
@@ -2472,3 +2472,624 @@ class PyLith_JS(MathFunctions_JS):
                         #print jant
                                  
                           
+    def PlotSlipVelocity_At_Point(self, mainDir, XposAll, TimeBeginModel, TimeEndModel, Vpl):
+        ''' 
+            Plot the slip velocity at an specific point 
+        '''
+        
+        #convert Plate slip velocity to m/s
+        Vpl=(Vpl*1e-2)/3.154e+7
+        print "Plate Velocity = " , Vpl, " m/s"
+        
+        for Xpos in XposAll:
+                
+            #Xpos=250
+            fontsizeJS=16
+            #dt=0.25
+            self.FindIndex(Xpos)
+            OutputNameFig=mainDir+'Figures/Slip_Velocity_at_Point_'+str(int(self.FaultX[self.index]/1e3 ))+'.eps'
+                
+            count = 0
+            slip_velocity = np.zeros((self.disp1.shape[1]))
+            t=np.copy(slip_velocity)
+            
+                      
+            
+            for i in range(1,self.disp1.shape[1]):
+                
+                if self.FaultTime[i] >= TimeBeginModel and self.FaultTime[i] <=TimeEndModel:
+                    
+                    slip=np.abs(self.disp1[self.index,i] - self.disp1[self.index,i-1])
+                    
+                    #Converting from Kyears to years
+                    dt=(self.FaultTime[i] - self.FaultTime[i-1])*1.0e3
+                    
+                    #print slip
+                    
+                    if slip > 0:
+                        #convert to m/s from m/year
+                        slip_velocity[count] = (slip / (dt*3.154e+7))
+                        t[count] = self.FaultTime[i]
+                        count=count+1
+              
+            tmp1=t[0:count-1]
+            t=np.array(tmp1)
+            
+            tmp2=slip_velocity[0:count-1]
+            slip_velocity=np.array(tmp2)
+            
+            #print np.amin(t), np.amax(t)
+            
+            plt.figure()
+            plt.semilogy(t, slip_velocity,'-k', label="fault slip velocity")
+            plt.semilogy(t, Vpl*np.ones(slip_velocity.shape[0]),'-r', label="plate velocity")
+            #plt.xlim(TimeBeginModel, TimeEndModel)
+            #plt.xlim(TimeBeginModel,TimeEndModel)
+            plt.ylim([1e-21, 1e-3])
+            plt.xlim(np.amin(t),np.amax(t))
+            plt.xlabel("time [Kyears]", fontsize=fontsizeJS)
+            plt.ylabel("slip velocity [m/s]", fontsize=fontsizeJS)
+            plt.title('Slip Velocity at point X= '+str(int(self.FaultX[self.index]/1e3)) +' km', fontsize=fontsizeJS)
+            plt.tick_params(labelsize=fontsizeJS)
+            #plt.legend(loc='upper left', fontsize=fontsizeJS)
+            plt.legend(loc='lower right', fontsize=fontsizeJS)
+            plt.grid()
+            
+            plt.savefig(OutputNameFig,format='eps',dpi=1200)
+            #plt.show()
+    
+    
+    
+    def PlotShearStressChangeAccumulation_At_Point(self, mainDir, XposAll, TimeBeginModel, TimeEndModel, Vpl):
+        ''' 
+            Plot the slip velocity at an specific point 
+        '''
+        
+        #convert Plate slip velocity to m/s
+        Vpl=(Vpl*1e-2)/3.154e+7
+        print "Plate Velocity = " , Vpl, " m/s"
+        
+        for Xpos in XposAll:
+                
+            #Xpos=250
+            fontsizeJS=16
+            #dt=0.25
+            self.FindIndex(Xpos)
+            OutputNameFig=mainDir+'Figures/Shear_Stress_Change_with_Time_at_Point_'+str(int(self.FaultX[self.index]/1e3 ))+'.eps'
+                
+            count = 0
+            shear_stress_change_final = np.zeros((self.disp1.shape[1]))
+            normal_stress_change_final = np.zeros((self.disp1.shape[1]))
+            shear_stress_change = 0
+            normal_stress_change = 0
+            t=np.copy(shear_stress_change_final)
+            
+                      
+            for i in range(1,self.disp1.shape[1]):
+                
+                #shear_stress_change= shear_stress_change + np.abs(self.FaultTraction1[ self.index, i ]) - np.abs(self.FaultTraction1[ self.index, i-1 ])
+                #shear_stress_change= shear_stress_change +  np.abs(np.abs(self.FaultTraction1[ self.index, i ]) - np.abs(self.FaultTraction1[ self.index, i-1 ]))
+                shear_stress_change= shear_stress_change +  (np.abs(self.FaultTraction1[ self.index, i ]) - np.abs(self.FaultTraction1[ self.index, i-1 ]))
+                normal_stress_change= normal_stress_change +  ((self.FaultTraction2[ self.index, i ]) - (self.FaultTraction2[ self.index, i-1 ]))
+                #shear_stress_change_final[count] = shear_stress_change_final[count-1] + shear_stress_change
+                
+                
+                if self.FaultTime[i] >= TimeBeginModel and self.FaultTime[i] <=TimeEndModel:
+                    
+                    #if shear_stress_change >0:
+                    shear_stress_change_final[count] =  shear_stress_change
+                    normal_stress_change_final[count] =  normal_stress_change
+                    t[count] = self.FaultTime[i]
+                    count=count+1
+                
+            
+            tmp1=t[0:count-1]
+            t=np.array(tmp1)
+            
+            tmp2=shear_stress_change_final[0:count-1]
+            shear_stress_change_final=np.array(tmp2)
+            
+            tmp3=normal_stress_change_final[0:count-1]
+            normal_stress_change_final=np.array(tmp3)
+                        
+            #print np.amin(t), np.amax(t)
+            
+            plt.figure()
+            plt.plot(t, shear_stress_change_final,'-k', label="shear stress change")
+            plt.plot(t, normal_stress_change_final,'-r', label="normal stress change")
+            #plt.semilogy(t, Vpl*np.ones(slip_velocity.shape[0]),'-r', label="plate velocity")
+            #plt.xlim(TimeBeginModel, TimeEndModel)
+            #plt.xlim(TimeBeginModel,TimeEndModel)
+            plt.ylim([-200, 600])
+            plt.xlim(np.amin(t),np.amax(t))
+            plt.xlabel("time [Kyears]", fontsize=fontsizeJS)
+            plt.ylabel("cummulative  stress change [MPa]", fontsize=fontsizeJS)
+            plt.title('Cummulative  stress change at point X= '+str(int(self.FaultX[self.index]/1e3)) +' km', fontsize=fontsizeJS)
+            plt.tick_params(labelsize=fontsizeJS)
+            #plt.legend(loc='upper left', fontsize=fontsizeJS)
+            plt.legend(loc='lower right', fontsize=fontsizeJS)
+            plt.grid()
+            
+            plt.savefig(OutputNameFig,format='eps',dpi=1200)
+            #plt.show()
+            
+    
+    def Plot_ShearStressChange_And_Slip_Change_Accumulation_At_Point(self, mainDir, XposAll, TimeBeginModel, TimeEndModel, Vpl):
+        ''' 
+            Plot the slip velocity at an specific point 
+        '''
+        
+        #convert Plate slip velocity to m/s
+        Vpl=(Vpl*1e-2)/3.154e+7
+        print "Plate Velocity = " , Vpl, " m/s"
+        
+        countFig=19734
+        for Xpos in XposAll:
+            
+            
+            #Xpos=250
+            fontsizeJS=16
+            #dt=0.25
+            self.FindIndex(Xpos)
+            OutputNameFig=mainDir+'Figures/Slip_Change_and_Shear_Stress_Change_with_Time_at_Point_'+str(int(self.FaultX[self.index]/1e3 ))+'.eps'
+            
+            slip_velocity = np.zeros((self.disp1.shape[1]))
+            count = 0
+            shear_stress_change_final = np.zeros((self.disp1.shape[1]))
+            normal_stress_change_final = np.zeros((self.disp1.shape[1]))
+            shear_stress_change = np.array(0)
+            normal_stress_change = np.array(0)
+            
+            t=np.copy(shear_stress_change_final)
+            
+                      
+            for i in range(1,self.disp1.shape[1]):
+                
+                #shear_stress_change= shear_stress_change + np.abs(self.FaultTraction1[ self.index, i ]) - np.abs(self.FaultTraction1[ self.index, i-1 ])
+                #shear_stress_change= shear_stress_change +  np.abs(np.abs(self.FaultTraction1[ self.index, i ]) - np.abs(self.FaultTraction1[ self.index, i-1 ]))
+                shear_stress_change= shear_stress_change +  (np.abs(self.FaultTraction1[ self.index, i ]) - np.abs(self.FaultTraction1[ self.index, i-1 ]))
+                normal_stress_change= normal_stress_change +  ((self.FaultTraction2[ self.index, i ]) - (self.FaultTraction2[ self.index, i-1 ]))
+                #shear_stress_change_final[count] = shear_stress_change_final[count-1] + shear_stress_change
+                
+                if self.FaultTime[i] >= TimeBeginModel and self.FaultTime[i] <=TimeEndModel:
+                    
+                    slip=np.abs(self.disp1[self.index,i] - self.disp1[self.index,i-1])
+                    #Converting from Kyears to years
+                    dt=(self.FaultTime[i] - self.FaultTime[i-1])*1.0e3
+                    
+                    #if slip > 0:
+                        #convert to m/s from m/year
+                    slip_velocity[count] = (slip / (dt*3.154e+7))
+                        #t[count] = self.FaultTime[i]
+                        #count=count+1
+                    
+                    #if shear_stress_change >0:
+                    shear_stress_change_final[count] =  shear_stress_change
+                    normal_stress_change_final[count] =  normal_stress_change
+                    t[count] = self.FaultTime[i]
+                    count=count+1
+                
+            
+            tmp1=t[0:count-1]
+            t=np.array(tmp1)
+            
+            tmp2=shear_stress_change_final[0:count-1]
+            shear_stress_change_final=np.array(tmp2)
+            
+            tmp3=normal_stress_change_final[0:count-1]
+            normal_stress_change_final=np.array(tmp3)
+            
+            tmp4=slip_velocity[0:count-1]
+            slip_velocity=np.array(tmp4)
+                        
+            #print np.amin(t), np.amax(t)
+            
+            plt.figure(countFig,[7,12])
+            countFig=countFig + 1
+            
+            plt.subplot(2,1,1)
+            plt.semilogy(t, slip_velocity,'-k', label="fault slip velocity")
+            plt.semilogy(t, Vpl*np.ones(slip_velocity.shape[0]),'-r', label="plate velocity")
+            #plt.xlim(TimeBeginModel, TimeEndModel)
+            #plt.xlim(TimeBeginModel,TimeEndModel)
+            plt.ylim([1e-21, 1e-3])
+            plt.xlim(np.amin(t),np.amax(t))
+            plt.xlabel("time [Kyears]", fontsize=fontsizeJS)
+            plt.ylabel("slip velocity [m/s]", fontsize=fontsizeJS)
+            plt.title('Slip Velocity at point X= '+str(int(self.FaultX[self.index]/1e3)) +' km', fontsize=fontsizeJS)
+            plt.tick_params(labelsize=fontsizeJS)
+            #plt.legend(loc='upper left', fontsize=fontsizeJS)
+            plt.legend(loc='lower right', fontsize=fontsizeJS)
+            plt.grid()
+            
+            plt.subplot(2,1,2)
+            plt.plot(t, shear_stress_change_final,'-k', label="shear stress change")
+            plt.plot(t, normal_stress_change_final,'-r', label="normal stress change")
+            #plt.semilogy(t, Vpl*np.ones(slip_velocity.shape[0]),'-r', label="plate velocity")
+            #plt.xlim(TimeBeginModel, TimeEndModel)
+            #plt.xlim(TimeBeginModel,TimeEndModel)
+            plt.ylim([-200, 600])
+            plt.xlim(np.amin(t),np.amax(t))
+            plt.xlabel("time [Kyears]", fontsize=fontsizeJS)
+            plt.ylabel("cummulative  stress change [MPa]", fontsize=fontsizeJS)
+            plt.title('Cummulative  stress change at point X= '+str(int(self.FaultX[self.index]/1e3)) +' km', fontsize=fontsizeJS)
+            plt.tick_params(labelsize=fontsizeJS)
+            #plt.legend(loc='upper left', fontsize=fontsizeJS)
+            plt.legend(loc='lower right', fontsize=fontsizeJS)
+            plt.grid()
+            
+            plt.savefig(OutputNameFig,format='eps',dpi=1200, bbox_inches='tight')
+            #plt.show()
+            
+    
+    
+    def PlotFault_Cummulative_StressChange_And_Fault_Slip_MAKE_ANIMATION(self,  mainDir, model, TimeBeginModel, TimeEndModel):
+                
+                count_file=1
+                count_t=1
+                
+                CFF_normal = 0
+                CFF = 0
+                jant=0
+                fontsizeJS=18
+                fontsize_Legend_JS=14
+                                
+                StressChange_Total=np.zeros(self.disp1[:,0].shape[0])
+                StressChangeNormal_Total=np.zeros(self.disp1[:,0].shape[0])
+                SlipChange_Total=np.zeros(self.disp1[:,0].shape[0])
+                
+                plt.ion()
+                
+                f,ax=plt.subplots(4,sharex=False, num=124641,figsize=[12,20])
+                                       
+                        
+                f.set_size_inches(10,20)
+                f.subplots_adjust(hspace=0.4)
+                
+                #plt.plot(self.year[:,0],self.disp[:,0] - self.disp[0,0] ,'-k',label=self.nameGPS[0])
+                    
+                ax[0].plot(self.FaultX/1e3, self.FaultY/1e3,'k', linewidth=3)
+                ax[0].plot(self.FaultX/1e3, self.FaultY/1e3-8,'--k', linewidth=1.5)
+                
+                ax[0].set_ylim([0,-80])
+                ax[0].invert_yaxis()
+                #ax[0].xlim([self.FaultX[0]/1e3, self.FaultX[-1]/1e3])
+                plt.gca().invert_yaxis()
+                #ax[0].set_xlabel('X [km]',fontsize=22)
+                ax[0].set_ylabel('Z [km]',fontsize=fontsizeJS)
+                #plt.legend(loc='upper right',fontsize=22)
+                ax[0].grid(True)
+                ax[0].tick_params(labelsize=fontsizeJS)
+                ax[0] = ax[0].twinx()
+                lns2 = ax[0].plot(self.FaultX/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
+                lns3 = ax[0].plot(self.FaultX/1e3, self.mu_f_d[:],'-r',linewidth=2,label='$\mu_d$')
+                ax[0].set_ylim([0,1])
+                ax[0].set_ylabel('friction coefficient',fontsize=fontsizeJS)
+                lns = lns2+lns3
+                labs = [l.get_label() for l in lns]
+                ax[0].legend(lns, labs, loc='upper right', fontsize=fontsizeJS)
+                ax[0].tick_params(labelsize=fontsizeJS)
+                #ax[0].set_title('Time =  '+str(self.FaultTime[k])+' Kyears', fontsize=15)
+                #ax[0].set_title('Time step =  '+str((self.FaultTime[k] - self.FaultTime[k-1])*1e3)+' years  count='+str(count_t), fontsize=15)
+                
+                #plt.gca().invert_yaxis()
+                
+                
+                TimeToPlot=np.linspace(TimeBeginModel,TimeEndModel,100)
+                
+                flagSelTime=1
+                stepTime=1000
+                for k in range(1,self.disp1.shape[1],stepTime):    
+                    
+                    #shear_stress_change= np.abs(self.FaultTraction1[ :, k ]) - np.abs(self.FaultTraction1[ :, k-1 ])
+                    #CFF = CFF + shear_stress_change 
+                    
+                    if self.FaultTime[k] >= TimeBeginModel and self.FaultTime[k] <= TimeEndModel:
+                        
+                        #OutputNameFig=mainDir + 'Figures/Frames/Fault_CFF_All_TimeSteps_SlipRate_and_Geometry_'+str(count_t)+'.eps'
+                        OutputNameFig=mainDir + 'Movies/Fault_CumulativeStressChange_'+str(count_file)+'.png' 
+                        
+                        count_file=count_file+1 
+                        
+                        if flagSelTime == 1:
+                            jant=k-1
+                            
+                        #print jant,k
+                        slip = np.zeros(self.disp1[:,0].shape[0])
+                        for j in range(jant,k):
+                            flagSelTime=0
+                            count_t=count_t + 1
+                            #print j
+                            slip=slip + np.abs( (self.disp1[:,j] - self.disp1[:,j-1]) )
+                            
+                            shear_stress_change= np.abs(self.FaultTraction1[ :, j ]) - np.abs(self.FaultTraction1[ :, j-1 ])
+                            normal_stress_change= (self.FaultTraction2[ :, j ]) - (self.FaultTraction2[ :, j-1 ])
+                            #shear_stress_change= np.abs(self.FaultTraction1[ :, j ]) - np.abs(self.FaultTraction1[ :, 0 ])
+                            #CFF_normal = np.abs(shear_stress_change + self.mu_f_s*normal_stress_change)
+                            CFF_normal = CFF_normal + normal_stress_change
+                            #CFF = np.abs(shear_stress_change )
+                            CFF = CFF + shear_stress_change 
+                            #CFF_normal = np.abs(self.mu_f_s*normal_stress_change )
+                            
+                        jant=k
+                        
+                        SlipChange_Total = SlipChange_Total + slip
+                        StressChange_Total=  StressChange_Total + CFF 
+                        StressChangeNormal_Total= StressChangeNormal_Total + CFF_normal 
+                        
+                        lns4=ax[1].plot(self.FaultX/1e3, SlipChange_Total, '-k' ,  label='fault slip')
+                        ax[1].set_xlabel('X position along fault [km]', fontsize=fontsizeJS)
+                        ax[1].set_ylabel('Cummulative fault slip  [m]', fontsize=fontsizeJS)
+                        ax[1].grid(True)
+                        ax[1].tick_params(labelsize=fontsizeJS)
+                        ax[1].set_ylim([0,3000])
+                        #ax[1].set_ylim([1e-4,1e1])
+                        #ax[1].set_ylim([1e-2,1e3])
+                        ax[1].set_title(' time = '+str(count_t*0.25) + ' years', fontsize=fontsizeJS)
+                        
+                        
+                        #slip=slip + self.disp1[:,k] - self.disp1[:,k-1]
+                        #slip=slip + self.disp1[:,1:k] - self.disp1[:,1:k-1]
+                        
+                        lns4=ax[2].plot(self.FaultX/1e3, StressChange_Total, '-k' ,  label='stress change')
+                        lns6=ax[2].plot(self.FaultX/1e3, StressChangeNormal_Total, '-r' ,  label='stress change')
+                        ax[2].set_xlabel('X position along fault [km]', fontsize=fontsizeJS)
+                        ax[2].set_ylabel('Cummulative stress change  [MPa]', fontsize=fontsizeJS)
+                        ax[2].grid(True)
+                        ax[2].tick_params(labelsize=fontsizeJS)
+                        #ax[2].set_ylim([1e-4,1e1])
+                        #ax[2].set_ylim([1e-5,1e2])
+                        ax[2].set_ylim([-8000,8000])
+                        
+                        ax[2].set_title(' time = '+str(count_t*0.25) + ' years', fontsize=fontsizeJS)
+                                                
+                        '''                      
+                        shear_stress_change= np.abs(self.FaultTraction1[ :, k ]) - np.abs(self.FaultTraction1[ :, k-1 ])
+                        normal_stress_change= (self.FaultTraction2[ :, k ]) - (self.FaultTraction2[ :, k-1 ])
+                        #CFF = shear_stress_change + self.mu_f_s*normal_stress_change
+                        tmp = shear_stress_change + self.mu_f_s*normal_stress_change
+                        CFF=CFF + (np.min(tmp))
+                        
+                        
+                        lns4=ax[2].plot(self.FaultX/1e3, CFF, '-k', linewidth=2 ,  label='CFF [MPa]')
+                        ax[2].set_xlabel('X position along fault [km]', fontsize=fontsizeJS)
+                        ax[2].set_ylabel('CFF [MPa]', fontsize=fontsizeJS)
+                        #ax[2].set_ylabel('shear stress change [MPa]', fontsize=12)
+                        ax[2].grid(True)
+                        ax[2].tick_params(labelsize=fontsizeJS)
+                        ax[2].set_ylim([-0.1,0.1])
+                        '''
+                                    
+            
+                        
+                        #ax[0] = ax[0].twinx()
+                        #ax[0].plot(model.year[:,0], model.disp[:,0] - model.disp[0,0],'k', linewidth=3)
+                        #plt.plot(, ,'-k',label=self.nameGPS[0])
+                        ax[3].invert_yaxis()
+                        
+                        ax[3].plot(model.year[:,0], model.disp[:,0] - model.disp[0,0], '-k', linewidth=2 ,  label='fault slip')
+                        ax[3].plot(model.year[model.SSEind[:,0],0], model.disp[model.SSEind[:,0],0] - model.disp[0,0], 'bs',)
+                        
+                        ax[3].plot(self.FaultTime[k],10,'rs')
+                        ax[3].set_xlabel('time [Kyears]', fontsize=fontsizeJS)
+                        ax[3].set_ylabel('Horizontal displacement', fontsize=fontsizeJS)
+                        ax[3].grid(True)
+                        ax[3].tick_params(labelsize=fontsizeJS)
+                        ax[3].set_ylim([-400,700])
+                        
+                        #f.set_tight_layout()
+                        #f.tight_layout()
+                        
+                        
+                        #plt.pause(1)
+                        #plt.show()
+                        #plt.clf()
+                    
+                        #print "Time = ",k*0.25
+                        #print "printing ,",OutputNameFig
+                         
+                        #plt.savefig(OutputNameFig,format='eps',dpi=1200, bbox_inches='tight')
+                        #plt.savefig(OutputNameFig,format='png', bbox_inches='tight', pad_inched=20)       
+                        plt.savefig(OutputNameFig,format='png')       
+                        #plt.show()                      
+                    
+                    else:
+                        jant=k
+                        #print jant
+        
+    
+    def Plot_Coulomb_Stress_Path(self, mainDir, TimeBeginModel, XposAll):
+        
+        fontsizeJS=15
+        #XposAll=np.array([100,150])
+        
+    
+        for Xpos in XposAll:
+            self.FindIndex(Xpos)
+            OutputNameFig=mainDir+'Figures/Coulomb_Stress_Path_at_Point_'+str(int(self.FaultX[self.index]/1e3 ))+'.eps'
+            
+            #print self.FaultTraction1.shape, self.FaultX[self.index]
+            
+            xtmp=[]
+            plt.figure()
+            for i in range(0,self.FaultTraction2.shape[1],100): 
+                if self.FaultTime[i] > TimeBeginModel:
+                    ibegin = i  
+                    break  
+                
+            xtmp=np.append(xtmp,self.FaultTraction2[self.index,:]) /1e3
+            
+            step=50
+            plt.scatter(self.FaultTraction2[self.index,ibegin:-1:step] / 1e3 , self.FaultTraction1[self.index,ibegin:-1:step] /1e3 ,s=20, c=self.FaultTime[ibegin:-1:step])
+            #plt.plot(self.FaultTraction2[self.index,ibegin:-1:step] / 1e3 , self.FaultTraction1[self.index,ibegin:-1:step] /1e3 ,'-r')
+            #plt.scatter(self.FaultTraction2[self.index,:] / 1e3 , self.FaultTraction1[self.index,:] /1e3 ,s=60, c=self.FaultTime)
+            plt.plot(xtmp,-self.mu_f_s[self.index]*xtmp,'-k', linewidth=3)
+            plt.plot(xtmp,-self.mu_f_d[self.index]*xtmp,'-k', linewidth=3)   
+            plt.xlabel('normal stress [GPa]', fontsize=fontsizeJS)
+            plt.ylabel('shear stress [GPa]', fontsize=fontsizeJS)    
+            plt.title('Coulomb stress path at point '+str(int(self.FaultX[self.index]/1e3 ))+ ' km', fontsize=fontsizeJS)
+            
+            #plt.xlim([-1.2,-0.95])
+            #plt.ylim([0.3,0.8])
+            cbar=plt.colorbar()
+            cbar.set_label('Time [Kyears]', fontsize=fontsizeJS)
+            plt.tick_params(labelsize=fontsizeJS)
+            plt.grid()
+            
+            plt.savefig(OutputNameFig,format='eps',dpi=1200, bbox_inches='tight')
+        #plt.show()
+    
+    
+    def PlotFault_Stress_MAKE_ANIMATION(self,  mainDir, model, TimeBeginModel, TimeEndModel):
+                
+                count_file=1
+                count_t=1
+                
+               
+                CFF_normal = 0
+                CFF = 0
+                jant=0
+                fontsizeJS=18
+                fontsize_Legend_JS=14
+                                
+                StressChange_Total=np.zeros(self.disp1[:,0].shape[0])
+                StressChangeNormal_Total=np.zeros(self.disp1[:,0].shape[0])
+                slip=np.zeros(self.disp1[:,0].shape[0])
+                
+                plt.ion()
+                
+                f,ax=plt.subplots(4,sharex=False, num=124641,figsize=[12,20])
+                                       
+                        
+                f.set_size_inches(10,20)
+                f.subplots_adjust(hspace=0.4)
+                
+                #plt.plot(self.year[:,0],self.disp[:,0] - self.disp[0,0] ,'-k',label=self.nameGPS[0])
+                    
+                ax[0].plot(self.FaultX/1e3, self.FaultY/1e3,'k', linewidth=3)
+                ax[0].plot(self.FaultX/1e3, self.FaultY/1e3-8,'--k', linewidth=1.5)
+                
+                ax[0].set_ylim([0,-80])
+                ax[0].invert_yaxis()
+                #ax[0].xlim([self.FaultX[0]/1e3, self.FaultX[-1]/1e3])
+                plt.gca().invert_yaxis()
+                #ax[0].set_xlabel('X [km]',fontsize=22)
+                ax[0].set_ylabel('Z [km]',fontsize=fontsizeJS)
+                #plt.legend(loc='upper right',fontsize=22)
+                ax[0].grid(True)
+                ax[0].tick_params(labelsize=fontsizeJS)
+                ax[0] = ax[0].twinx()
+                lns2 = ax[0].plot(self.FaultX/1e3, self.mu_f_s[:],'-b',linewidth=2,label='$\mu_s$')
+                lns3 = ax[0].plot(self.FaultX/1e3, self.mu_f_d[:],'-r',linewidth=2,label='$\mu_d$')
+                ax[0].set_ylim([0,1])
+                ax[0].set_ylabel('friction coefficient',fontsize=fontsizeJS)
+                lns = lns2+lns3
+                labs = [l.get_label() for l in lns]
+                ax[0].legend(lns, labs, loc='upper right', fontsize=fontsizeJS)
+                ax[0].tick_params(labelsize=fontsizeJS)
+                #ax[0].set_title('Time =  '+str(self.FaultTime[k])+' Kyears', fontsize=15)
+                #ax[0].set_title('Time step =  '+str((self.FaultTime[k] - self.FaultTime[k-1])*1e3)+' years  count='+str(count_t), fontsize=15)
+                
+                #plt.gca().invert_yaxis()
+                
+                
+                               
+                flagSelTime=1
+                stepTime=100
+                for k in range(1,self.disp1.shape[1],stepTime):    
+                    
+                    #shear_stress_change= np.abs(self.FaultTraction1[ :, k ]) - np.abs(self.FaultTraction1[ :, k-1 ])
+                    #CFF = CFF + shear_stress_change 
+                    
+                    if self.FaultTime[k] >= TimeBeginModel and self.FaultTime[k] <= TimeEndModel:
+                        
+                        #OutputNameFig=mainDir + 'Figures/Frames/Fault_CFF_All_TimeSteps_SlipRate_and_Geometry_'+str(count_t)+'.eps'
+                        OutputNameFig=mainDir + 'Movies/Fault_Absolute_Stress_'+str(count_file)+'.png' 
+                        
+                        count_file=count_file+1 
+                        
+                        
+                        slip= slip + np.abs( (self.disp1[:,k] - self.disp1[:,k-1])  )
+                        
+                        shear_stress= np.abs(self.FaultTraction1[ :, k ]) 
+                        normal_stress= (self.FaultTraction2[ :, k ])  
+                            
+                           
+                        lns4=ax[1].plot(self.FaultX/1e3, slip, '-k' ,  label='fault slip')
+                        ax[1].set_xlabel('X position along fault [km]', fontsize=fontsizeJS)
+                        ax[1].set_ylabel('Cummulative fault slip  [m]', fontsize=fontsizeJS)
+                        ax[1].grid(True)
+                        ax[1].tick_params(labelsize=fontsizeJS)
+                        #ax[1].set_ylim([0,3000])
+                        #ax[1].set_ylim([1e-4,1e1])
+                        #ax[1].set_ylim([1e-2,1e3])
+                        ax[1].set_title(' time = '+str(count_t*0.25) + ' years', fontsize=fontsizeJS)
+                        
+                        
+                        #slip=slip + self.disp1[:,k] - self.disp1[:,k-1]
+                        #slip=slip + self.disp1[:,1:k] - self.disp1[:,1:k-1]
+                        
+                        lns4=ax[2].plot(self.FaultX/1e3, shear_stress, '-k' ,  label='stress change')
+                        lns6=ax[2].plot(self.FaultX/1e3, np.abs(self.mu_f_s*normal_stress), '-r' ,  label=r'\mu_s \sigma_n')
+                        lns7=ax[2].plot(self.FaultX/1e3, np.abs(self.mu_f_d*normal_stress), '-b' ,  label=r'\mu_d \sigma_n')
+                        ax[2].set_xlabel('X position along fault [km]', fontsize=fontsizeJS)
+                        ax[2].set_ylabel('Cummulative stress change  [MPa]', fontsize=fontsizeJS)
+                        ax[2].grid(True)
+                        ax[2].tick_params(labelsize=fontsizeJS)
+                        #ax[2].set_ylim([1e-4,1e1])
+                        #ax[2].set_ylim([1e-5,1e2])
+                        #ax[2].set_ylim([-8000,8000])
+                        
+                        ax[2].set_title(' time = '+str(count_t*0.25) + ' years', fontsize=fontsizeJS)
+                                                
+                        '''                      
+                        shear_stress_change= np.abs(self.FaultTraction1[ :, k ]) - np.abs(self.FaultTraction1[ :, k-1 ])
+                        normal_stress_change= (self.FaultTraction2[ :, k ]) - (self.FaultTraction2[ :, k-1 ])
+                        #CFF = shear_stress_change + self.mu_f_s*normal_stress_change
+                        tmp = shear_stress_change + self.mu_f_s*normal_stress_change
+                        CFF=CFF + (np.min(tmp))
+                        
+                        
+                        lns4=ax[2].plot(self.FaultX/1e3, CFF, '-k', linewidth=2 ,  label='CFF [MPa]')
+                        ax[2].set_xlabel('X position along fault [km]', fontsize=fontsizeJS)
+                        ax[2].set_ylabel('CFF [MPa]', fontsize=fontsizeJS)
+                        #ax[2].set_ylabel('shear stress change [MPa]', fontsize=12)
+                        ax[2].grid(True)
+                        ax[2].tick_params(labelsize=fontsizeJS)
+                        ax[2].set_ylim([-0.1,0.1])
+                        '''
+                                    
+            
+                        
+                        #ax[0] = ax[0].twinx()
+                        #ax[0].plot(model.year[:,0], model.disp[:,0] - model.disp[0,0],'k', linewidth=3)
+                        #plt.plot(, ,'-k',label=self.nameGPS[0])
+                        ax[3].invert_yaxis()
+                        
+                        ax[3].plot(model.year[:,0], model.disp[:,0] - model.disp[0,0], '-k', linewidth=2 ,  label='fault slip')
+                        ax[3].plot(model.year[model.SSEind[:,0],0], model.disp[model.SSEind[:,0],0] - model.disp[0,0], 'bs',)
+                        
+                        ax[3].plot(self.FaultTime[k],10,'rs')
+                        ax[3].set_xlabel('time [Kyears]', fontsize=fontsizeJS)
+                        ax[3].set_ylabel('Horizontal displacement', fontsize=fontsizeJS)
+                        ax[3].grid(True)
+                        ax[3].tick_params(labelsize=fontsizeJS)
+                        ax[3].set_ylim([-400,700])
+                        
+                        #f.set_tight_layout()
+                        #f.tight_layout()
+                        
+                        
+                        #plt.pause(1)
+                        #plt.show()
+                        #plt.clf()
+                    
+                        #print "Time = ",k*0.25
+                        #print "printing ,",OutputNameFig
+                         
+                        #plt.savefig(OutputNameFig,format='eps',dpi=1200, bbox_inches='tight')
+                        #plt.savefig(OutputNameFig,format='png', bbox_inches='tight', pad_inched=20)       
+                        plt.savefig(OutputNameFig,format='png')       
+                        #plt.show()                      
+                    
+                    
