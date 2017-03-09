@@ -34,15 +34,13 @@ def main():
         mu_s_constant=float(str(sys.argv[8]) )     #Standard deviation
         
     elif Friction_Type == "Linear":
-        ReferenceDir=str(sys.argv[2])   #Reference Dir to get the fault geometry information
+        InputFaultGeometry=str(sys.argv[2])   ##File Containing the fault geometry X, Y
         mainDir=str(sys.argv[3])   #Reference Dir to get the fault geometry information
         
-        InputFaultGeometry=str(sys.argv[4]) ##File Containing the fault geometry X, Y
-    
-        slope_s=float(str(sys.argv[5]))          #static coeff slope
-        intercept_s=float(str(sys.argv[6]) )     #Standard deviation
-        slope_d=float(str(sys.argv[7]) )     #Standard deviation
-        intercept_d=float(str(sys.argv[8]))          #Mean value
+        slope_s=float(str(sys.argv[4]))          #static coeff slope
+        intercept_s=float(str(sys.argv[5]) )     #Standard deviation
+        slope_d=float(str(sys.argv[6]) )     #Standard deviation
+        intercept_d=float(str(sys.argv[7]))          #Mean value
         
         
     else:    
@@ -53,14 +51,10 @@ def main():
 
     mainDir=mainDir+'/'
             
-    dir=ReferenceDir+'Export/data/'
-    basenameSurface='GPS_Displacement'
-    number=0
-    #data=PyLith_JS(dir,basenameSurface,number)
     direction="none"
     TimeBegin="0"
     TimeEnd="0"
-    data=PyLith_JS(dir, direction, TimeBegin, TimeEnd)
+    data=PyLith_JS(mainDir, direction, TimeBegin, TimeEnd)
     
     
     Time=np.array([0])  ### HERE I GET ONLY THE FIRST TIME STEP
