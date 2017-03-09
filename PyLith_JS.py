@@ -332,7 +332,7 @@ class PyLith_JS(MathFunctions_JS):
           num-values =      4
           value-names =  static-coefficient dynamic-coefficient slip-weakening-parameter cohesion
           value-units =   none none  m Pa
-          num-locs =  86
+          num-locs =  85
           data-dim =    1
           space-dim =    2
           cs-data = cartesian {
