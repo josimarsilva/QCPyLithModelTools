@@ -37,11 +37,12 @@ def main():
         ReferenceDir=str(sys.argv[2])   #Reference Dir to get the fault geometry information
         mainDir=str(sys.argv[3])   #Reference Dir to get the fault geometry information
         
+        InputFaultGeometry=str(sys.argv[4]) ##File Containing the fault geometry X, Y
     
-        slope_s=float(str(sys.argv[4]))          #static coeff slope
-        intercept_s=float(str(sys.argv[5]) )     #Standard deviation
-        slope_d=float(str(sys.argv[6]) )     #Standard deviation
-        intercept_d=float(str(sys.argv[7]))          #Mean value
+        slope_s=float(str(sys.argv[5]))          #static coeff slope
+        intercept_s=float(str(sys.argv[6]) )     #Standard deviation
+        slope_d=float(str(sys.argv[7]) )     #Standard deviation
+        intercept_d=float(str(sys.argv[8]))          #Mean value
         
         
     else:    
@@ -64,14 +65,19 @@ def main():
     
     Time=np.array([0])  ### HERE I GET ONLY THE FIRST TIME STEP
             
-       
+    '''   
     #Getting fault geometry 
     OutputDir=ReferenceDir+'Figures/'
     basenameFault='Fault'
     OutputName=OutputDir + 'Fault_Tractions'
     data.LoadFaultTraction(dir,basenameFault,Time)
     #data.LoadFaultTractionRateAndState(dir,basenameFault, Time)
+    '''
     
+    #Load fault geometry here
+    fault_geometry=np.loadtxt(InputFaultGeometry)
+    data.FaultX=fault_geometry[:,0]
+    data.FaultY=fault_geometry[:,1]
     
     print "Grid  spacing size=", data.FaultX.shape[0]
         
