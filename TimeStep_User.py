@@ -80,12 +80,13 @@ def main():
     
     print "Total Number of Time steps: ", countTimeStep
     
-    
+    '''
     plt.figure(132123)
     plt.plot(tf,'-ks')
     plt.xlabel('time step number')
     plt.ylabel('total time [years]')
     plt.grid()
     plt.show()
+    '''
     
 main()
