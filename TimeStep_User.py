@@ -9,15 +9,27 @@ from  PyLith_JS import *
 
 
 def main():
-    #Export friction coefficient variation here.
-    #mainDir='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/version_28/'    
-    mainDir='/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/ReferenceFiles/TimeSteps/'
     
-    dt=0.25
-    LargeDT=250 # This is the time step for fault loading. normally is a large value, then a fine valu given dt
-    Tbegin=10000
-    Tend=20000
-    #Dir=mainDir+'spatial/'
+    ##############For Engaging server use this one
+    mainDir=str(sys.argv[1])    #main Dir where everyting will be based from
+    dt=float(sys.argv[2])    #main Dir where everyting will be based from
+    LargeDT=float(sys.argv[3])    #main Dir where everyting will be based from
+    Tbegin=float(sys.argv[4])    #main Dir where everyting will be based from
+    Tend=float(sys.argv[5])    #main Dir where everyting will be based from
+    mainDir=mainDir+'spatial/'
+    ############ End of Engagin Server
+    
+    ### For Local Machine use this one
+    #Export friction coefficient variation here.
+    #mainDir='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/SensitivityTests/Linear_Friction_Coefficient/'    
+    #mainDir='/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/ReferenceFiles/TimeSteps/'
+    
+    #dt=0.25
+    #LargeDT=250 # This is the time step for fault loading. normally is a large value, then a fine valu given dt
+    #Tbegin=50000
+    #Tend=350000
+    ############### End Of Local Machine
+    
     FileName=mainDir+'TimeStepUser_Tbegin_'+str(Tbegin)+'_Tend_'+str(Tend)+'_dt_'+str(dt)+'.dat'
 
     print "Saving results to file = ", FileName
