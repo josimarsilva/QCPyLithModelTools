@@ -30,7 +30,7 @@ def main():
     #Tend=350000
     ############### End Of Local Machine
     
-    FileName=mainDir+'TimeStepUser_Tbegin_'+str(Tbegin)+'_Tend_'+str(Tend)+'_dt_'+str(dt)+'.dat'
+    FileName=mainDir+'TimeStepUser_Tbegin_'+str(int(Tbegin))+'_Tend_'+str(int(Tend))+'_dt_'+str(dt)+'.dat'
 
     print "Saving results to file = ", FileName
     
