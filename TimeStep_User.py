@@ -10,6 +10,7 @@ from  PyLith_JS import *
 
 def main():
     
+    
     ##############For Engaging server use this one
     mainDir=str(sys.argv[1])    #main Dir where everyting will be based from
     dt=float(sys.argv[2])    #main Dir where everyting will be based from
@@ -19,15 +20,15 @@ def main():
     mainDir=mainDir+'spatial/'
     ############ End of Engagin Server
     
+    
     ### For Local Machine use this one
     #Export friction coefficient variation here.
     #mainDir='/Users/josimar/Documents/Work/Projects/SlowEarthquakes/Modeling/PyLith/Runs/Calibration/2D/SensitivityTests/Linear_Friction_Coefficient/'    
-    #mainDir='/nobackup1/josimar/Projects/SlowEarthquakes/Modeling/2D/Calibration/SensitivityTests/FrictionCoefficient/ReferenceFiles/TimeSteps/'
     
     #dt=0.25
     #LargeDT=250 # This is the time step for fault loading. normally is a large value, then a fine valu given dt
-    #Tbegin=50000
-    #Tend=350000
+    #Tbegin=1000
+    #Tend=2000
     ############### End Of Local Machine
     
     FileName=mainDir+'TimeStepUser_Tbegin_'+str(int(Tbegin))+'_Tend_'+str(int(Tend))+'_dt_'+str(dt)+'.dat'
@@ -57,12 +58,19 @@ def main():
     s=step[0]
     k=0; i=0
     tf=np.array(0)
+    FlagBreak=0
+    
     while 1:
         t=t+s
         tf=np.append(tf,t)
         outstring = str(s) + '\n'            
         f.write(outstring)
         countTimeStep=countTimeStep+1
+        
+        if FlagBreak == 1:
+            f.write(outstring)
+            countTimeStep=countTimeStep+1
+            break
         
         #print s, t
         if (t >= tend[k+1] ):
@@ -72,6 +80,7 @@ def main():
             s= step[i+1]
             k=k+1
             i=i+1
+            FlagBreak=1
         
         
         #print s
