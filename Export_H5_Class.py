@@ -35,6 +35,8 @@ class Export_H5_Class():
         disp=fid["vertex_fields/displacement"]
         time=fid["time"]
         statFile=fid["stations"]
+        
+        fid.close()
 
         ### Here I get the indexes correspoding to the input stations
         indList=np.zeros([len(statInputName)])
@@ -130,6 +132,7 @@ class Export_H5_Class():
         #print slip.shape, time.shape, geometry.shape
         #print "Traction shape=", traction.shape
         
+        fid.close()
         
         ############Sort the fault coordinates by the x position
         x=geometry[:,0]
